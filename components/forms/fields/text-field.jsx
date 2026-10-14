@@ -7,6 +7,7 @@ export function TextField({
   className,
   invalid,
   describedBy,
+  required,
   ...props
 }) {
   return (
@@ -14,6 +15,7 @@ export function TextField({
       id={id}
       type={type}
       aria-invalid={invalid || undefined}
+      aria-required={required || undefined}
       aria-describedby={describedBy}
       className={cn("h-11 text-base md:text-base", className)}
       {...props}

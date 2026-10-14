@@ -7,7 +7,7 @@ Production Next.js App Router conventions for implementers. Product behavior rem
 | Group    | Purpose                                                            | Phase 1                            |
 | -------- | ------------------------------------------------------------------ | ---------------------------------- |
 | `(app)`  | Signed-in experience with app shell (route protection in Phase 2+) | Implemented with placeholder pages |
-| `(auth)` | Login, sign-up, verify, password reset—no app shell                | Documented only; pages in Phase 2  |
+| `(auth)` | Login, sign-up, verify, password reset—no app shell                | Implemented (Phase 2)              |
 
 ### `(app)` routes (public URLs)
 
