@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
@@ -15,8 +16,8 @@ import { authClient } from "@/lib/auth/auth-client";
 import { signUpSchema } from "@/lib/validation/auth-schemas";
 
 export function SignUpForm() {
+  const router = useRouter();
   const [formError, setFormError] = useState("");
-  const [success, setSuccess] = useState("");
   const [pending, setPending] = useState(false);
 
   const methods = useForm({
@@ -27,13 +28,12 @@ export function SignUpForm() {
 
   const onSubmit = methods.handleSubmit(async (values) => {
     setFormError("");
-    setSuccess("");
     setPending(true);
     const { error } = await authClient.signUp.email({
       name: values.name,
       email: values.email,
       password: values.password,
-      callbackURL: "/verify-email",
+      callbackURL: "/",
     });
     setPending(false);
 
@@ -42,16 +42,13 @@ export function SignUpForm() {
       return;
     }
 
-    setSuccess(
-      "Account created. Check your email for a verification link before signing in."
-    );
     methods.reset();
+    router.push("/verify-email?pending=1");
   });
 
   return (
     <FormProvider {...methods}>
       <AuthMessage>{formError}</AuthMessage>
-      <AuthMessage variant="success">{success}</AuthMessage>
       <GoogleSignInButton label="Sign up with Google" />
       <div className="my-6 flex items-center gap-3" role="separator">
         <div className="bg-border h-px flex-1" />

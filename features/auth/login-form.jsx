@@ -37,7 +37,7 @@ export function LoginForm() {
     if (error) {
       if (error.status === 403) {
         setFormError(
-          "Verify your email before signing in. Check your inbox or resend verification."
+          "Verify your email before signing in. Check your inbox or resend verification from the verify email page."
         );
         return;
       }
@@ -50,6 +50,16 @@ export function LoginForm() {
   return (
     <FormProvider {...methods}>
       <AuthMessage>{formError}</AuthMessage>
+      {formError.includes("Verify your email") ? (
+        <p className="text-body-sm text-center">
+          <Link
+            href="/verify-email"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            Go to verify email
+          </Link>
+        </p>
+      ) : null}
       <GoogleSignInButton />
       <div className="my-6 flex items-center gap-3" role="separator">
         <div className="bg-border h-px flex-1" />

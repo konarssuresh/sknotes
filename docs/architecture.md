@@ -38,10 +38,11 @@ MongoDB Atlas
   ├─ notes
   └─ tags
 
-Email provider / Google OAuth: Better Auth integrations, configured through secrets.
+Resend (transactional email) ◄── server-only lib/email/ ── Better Auth verify/reset callbacks
+Google OAuth: Better Auth social provider, configured through secrets.
 ```
 
-Netlify compatibility for the selected Next.js release, Better Auth's MongoDB adapter, email delivery, and Google OAuth must be proven in a small integration spike before production auth is built. Use Node-compatible server execution for MongoDB/auth. Do not depend on Edge runtime for database work. Keep application and repository layers portable from Netlify-specific APIs.
+Netlify compatibility for the selected Next.js release, Better Auth's MongoDB adapter, Resend email delivery (Phase 3), and Google OAuth must be proven before production auth email is relied on. Phase 2 may ship auth UI and callback hooks without live delivery; Phase 3 completes Resend integration. Use Node-compatible server execution for MongoDB/auth/email. Do not depend on Edge runtime for database work. Keep application and repository layers portable from Netlify-specific APIs.
 
 ## 3. Repository and module boundaries
 
@@ -72,7 +73,7 @@ components/
 features/
   auth/ notes/ tags/ search/ offline/ export/
 lib/
-  auth/ db/ validation/ errors/ logging/
+  auth/ db/ email/ validation/ errors/ logging/
   repositories/ application/ domain/
 ```
 
@@ -119,6 +120,43 @@ Better Auth owns identity, credentials/OAuth integration, verification/reset flo
 - Review CSRF behavior for cookie-authenticated state changes.
 - Logout clears active query caches and editor state; recovery data remains isolated by user ID and can only be restored after the same user signs in.
 - Account deletion requires recent authentication and explicit confirmation, then removes all account-associated application and auth data and local recovery data.
+- Email/password users with unverified email must not access `(app)` routes or private application APIs; redirect or stable errors guide them to `/verify-email`.
+
+### 6.1 Transactional email (Resend)
+
+Better Auth generates verification and password-reset tokens and URLs; **delivery** is handled by a server-only email module so the rest of the app does not import Resend directly.
+
+```text
+Better Auth (sendVerificationEmail / sendResetPassword)
+  → lib/email/send-transactional-email.js (or equivalent facade)
+  → lib/email/resend-client.js (Resend SDK adapter)
+  → Resend API
+  → User inbox
+
+User clicks link → Better Auth verify/reset Route Handler → session/cookie update → safe redirect
+```
+
+**Module boundaries**
+
+- `lib/email/`: transactional send API, Resend adapter, and templates (for example `lib/email/templates/` for HTML + plain-text verification and reset messages).
+- `lib/auth/auth.js`: Better Auth config registers callbacks that call the email facade only; no Resend imports in client bundles.
+- Templates: Quiet Paper branding, accessible HTML (semantic structure, sufficient contrast), plain-text fallback, clear subject lines.
+
+**Configuration (placeholders only in repo)**
+
+| Variable          | Purpose                                                                       |
+| ----------------- | ----------------------------------------------------------------------------- |
+| `RESEND_API_KEY`  | Resend API authentication (server-only)                                       |
+| `EMAIL_FROM`      | Verified sender on the Resend domain (for example `noreply@mail.example.com`) |
+| `BETTER_AUTH_URL` | Base URL for links Better Auth constructs                                     |
+
+Document **local** vs **Netlify** setup separately in Phase 3 implementation notes: local may use a Resend test key and safe recipients; production/preview use the verified production domain and Netlify environment UI.
+
+**Redirects:** Allowlist safe `callbackURL` / `redirectTo` targets for verify and reset flows (app origin paths only).
+
+**Testing:** Inject a mock transport in Vitest; integration tests assert callback invocation and template content without sending to real addresses.
+
+**Google OAuth:** When Better Auth marks the user verified from the provider, do not invoke verification email sends.
 
 ## 7. Data model
 
@@ -220,11 +258,11 @@ For a note mutation, MongoDB must atomically match `_id`, `userId`, and `expecte
 
 ## 10. Security, privacy, and operations
 
-- Keep database URLs, auth secrets, Google credentials, and email-provider secrets in server-only environment variables.
+- Keep database URLs, auth secrets, Google credentials, `RESEND_API_KEY`, and `EMAIL_FROM` in server-only environment variables. Sending must use a Resend-verified domain.
 - Apply Zod schemas to body/query/cursor inputs, validate Lexical structure/size, and reject unsafe link protocols.
 - Include ownership in each repository selector; do not fetch by ID and authorize later in the UI.
 - Rate-limit authentication, search, writes, and destructive actions.
-- Structured logs include request IDs, error categories, endpoint, and timing; exclude note/title content, passwords, tokens, and recovery copies.
+- Structured logs include request IDs, error categories, endpoint, and timing; exclude note/title content, passwords, session tokens, verification/reset tokens, full action URLs, email bodies, and recovery copies.
 - Monitor client/server failures and operational metrics (latency, auth failures, autosave/sync failures) with data minimization.
 - Use Atlas managed backups supported by the selected plan. Define RPO/RTO from the actual plan, document recovery, and test restore before production.
 - Use Netlify deploy previews for review and protected `main` for production. Avoid relying on platform-specific code outside deployment adapters/configuration.

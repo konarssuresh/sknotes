@@ -44,7 +44,15 @@ export function ForgotPasswordForm({ resetToken }) {
     setPending(false);
 
     if (error) {
-      setFormError(error.message || "Unable to send reset email.");
+      if (error.status === 429) {
+        setFormError(
+          "Too many requests. Please wait a few minutes and try again."
+        );
+        return;
+      }
+      setFormError(
+        error.message || "Unable to send reset email. Please try again later."
+      );
       return;
     }
 
@@ -65,6 +73,19 @@ export function ForgotPasswordForm({ resetToken }) {
     setPending(false);
 
     if (error) {
+      const message = error.message || "";
+      if (/expired|invalid|used/i.test(message)) {
+        setFormError(
+          "This reset link is invalid or has expired. Request a new link below."
+        );
+        return;
+      }
+      if (error.status === 429) {
+        setFormError(
+          "Too many attempts. Please wait a few minutes and try again."
+        );
+        return;
+      }
       setFormError(error.message || "Unable to reset password.");
       return;
     }
@@ -100,6 +121,13 @@ export function ForgotPasswordForm({ resetToken }) {
           </Button>
         </form>
         <p className="text-body-sm text-muted-foreground mt-6 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            Request a new reset link
+          </Link>
+          {" · "}
           <Link
             href="/login"
             className="text-primary underline-offset-4 hover:underline"

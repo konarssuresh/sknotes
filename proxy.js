@@ -40,7 +40,12 @@ export function proxy(request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthPath(pathname) && hasSessionCookie) {
+  if (
+    isAuthPath(pathname) &&
+    hasSessionCookie &&
+    pathname !== "/verify-email" &&
+    !pathname.startsWith("/verify-email/")
+  ) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

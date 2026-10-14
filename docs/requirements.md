@@ -22,6 +22,7 @@ The design reference is in [`design/`](design/): brief, tokens, screen specifica
 - Hosting: Netlify.
 - Database: MongoDB Atlas.
 - Authentication: Better Auth, including Google sign-in and email/password registration, verification, password reset, and session management; validate integrations before building dependent flows.
+- Transactional email: **Resend** for verification and password-reset delivery, invoked only from server-side code through a small email service module (not from client components or directly from UI).
 - Rich text: Lexical.
 - UI: Tailwind CSS and shadcn/ui, retaining the configured `base-nova` foundation.
 - Forms: React Hook Form with reusable application field adapters around accessible building-block controls.
@@ -35,8 +36,12 @@ The design reference is in [`design/`](design/): brief, tokens, screen specifica
 ## 3. Users and account model
 
 - A user can register with email/password or Google sign-in.
-- Email registration requires verification. Users can request another verification email.
-- Password reset uses a time-limited, single-use link.
+- Email registration requires verification. Users can request another verification email (subject to rate limits).
+- After email/password sign-up, the user sees a clear **check your email** state until they verify or request another message.
+- Email/password users **cannot access signed-in app routes** until their email is verified; they are guided to `/verify-email` instead.
+- Password reset uses a time-limited, single-use link delivered via the same transactional email service.
+- Password-reset requests use **generic** success messaging so the UI does not reveal whether an email address is registered.
+- Google sign-in uses the provider’s verified-email information; SKNotes does not send a redundant verification email when Better Auth already treats the account as verified.
 - Users can sign in, sign out, and manage their account/session.
 - All note and tag data is private to the authenticated user. Every server-side resource read and mutation enforces ownership.
 - Users can permanently delete their account and associated notes, tags, authentication records, sessions, and user-scoped local recovery data after explicit confirmation and recent authentication.
@@ -89,6 +94,18 @@ The design reference is in [`design/`](design/): brief, tokens, screen specifica
 - Respect `prefers-reduced-motion` for transitions and loading shimmer.
 - The application is responsive and mobile-first. PWA/offline capabilities are delivered in a later phase, not assumed to be present in the first UI release.
 
+### 4.5 Authentication, email, and account access
+
+- **Sign-up (email/password):** After registration, send a verification email via Resend (through the server email module). Show a check-your-email state; do not treat the user as fully onboarded until verification succeeds.
+- **Verification link:** Valid links complete verification through Better Auth token validation and then allow normal sign-in and app access. Expired, invalid, and already-used links show clear, non-technical outcomes with a path to resend or return to sign-in.
+- **Resend verification:** Available from the verify-email flow with bounded rate limits and without leaking whether an address is registered when combined with other auth responses.
+- **Sign-in (email/password):** Block sign-in until the email is verified (for example Better Auth `requireEmailVerification`); guide the user to verification/resend on failure.
+- **App access:** Unverified email/password users cannot use `(app)` routes or private note/tag APIs; server enforcement is mandatory (UI redirects are not sufficient alone).
+- **Google sign-in:** When the provider attests a verified email and Better Auth accepts the account as verified, skip redundant verification email sends.
+- **Password reset:** Request → email → reset form → success → sign-in. Links are single-use and time-limited. Reset request responses must not enable email enumeration.
+- **Email content:** SKNotes-branded subjects and bodies (accessible HTML + plain-text fallback). Links use `BETTER_AUTH_URL` and Better Auth–issued tokens with safe redirect targets only.
+- **Privacy:** Never log verification/reset tokens, email bodies, API keys, or full action URLs.
+
 ## 5. Offline and recovery requirements
 
 - Provide **limited offline resilience**, not a promise of full offline parity.
@@ -100,9 +117,10 @@ The design reference is in [`design/`](design/): brief, tokens, screen specifica
 
 ## 6. Non-functional requirements
 
-- **Privacy:** Never log note body/title, passwords, session tokens, OAuth secrets, or local recovery content. Redact sensitive values from errors and monitoring.
+- **Privacy:** Never log note body/title, passwords, session tokens, OAuth secrets, verification/reset tokens, transactional email bodies, Resend API keys, or local recovery content. Redact sensitive values from errors and monitoring.
 - **Forms and validation:** Use React Hook Form for interactive forms. Build reusable field adapters around shared accessible inputs and controls so feature forms do not repeat `Controller` wiring. Client validation improves feedback; server-side Zod validation remains authoritative.
-- **Security:** Zod validation at API boundaries; server-side authentication and per-resource ownership checks; request-size and Lexical content validation; safe link handling; risk-appropriate rate limits on authentication, search, writes, and destructive actions; review CSRF protections for cookie-authenticated mutations.
+- **Security:** Zod validation at API boundaries; server-side authentication and per-resource ownership checks; request-size and Lexical content validation; safe link handling; risk-appropriate rate limits on authentication, verification resend, password-reset requests, search, writes, and destructive actions; review CSRF protections for cookie-authenticated mutations. Password-reset and verification flows must resist email enumeration.
+- **Transactional email:** Resend is the MVP provider. Resend plan limits (send quotas, rate limits) are operational constraints documented at implementation time—not product delivery guarantees. Provider failures map to safe user messages and privacy-preserving server logs.
 - **API errors:** Stable structured errors for expected cases. Unexpected failures return a generic response with a request ID, with details only in protected server logs.
 - **Data consistency:** Note content, content version, derived plain text, timestamps, and revision are updated together. Tag references remain stable across renames.
 - **Database:** Start with essential user-scoped and query-aligned indexes; add indexes only with justified query patterns or measurements. Use backward-compatible schema changes and explicit migration scripts when existing data or indexes must change.
@@ -120,10 +138,11 @@ The design reference is in [`design/`](design/): brief, tokens, screen specifica
 - Full account export/import (individual note export is included).
 - Complete offline parity or background sync guarantees beyond the recovery and queued-write scope above.
 - Onboarding carousels, sample notes, and templates.
+- Marketing email, digests, newsletters, and per-note or in-app notification email.
 
 ## 8. Acceptance criteria
 
-The MVP is ready for release when a user can register/sign in securely; create, edit, autosave, recover, search, tag, pin, archive, trash, restore, permanently delete, and export notes; use light/dark/system themes; resolve stale-revision conflicts without losing either version; and use the core flows with keyboard and assistive technology. Ownership boundaries, privacy-safe logs, backups, test coverage of critical behaviors, and production deployment checks must be verified.
+The MVP is ready for release when a user can register/sign in securely; receive and complete **email verification** and **password reset** through Resend in configured environments; have **unverified email/password users blocked** from the signed-in app until verified; create, edit, autosave, recover, search, tag, pin, archive, trash, restore, permanently delete, and export notes; use light/dark/system themes; resolve stale-revision conflicts without losing either version; and use the core flows with keyboard and assistive technology. Email-related automated tests use mocks or Resend test mode and do not send to real user inboxes. Ownership boundaries, privacy-safe logs, backups, test coverage of critical behaviors, and production deployment checks must be verified.
 
 ## 9. Known specification alignment item
 

@@ -23,12 +23,12 @@ Production Next.js App Router conventions for implementers. Product behavior rem
 
 ### Future `(auth)` routes (Phase 2)
 
-| Path               | Planned file                         |
-| ------------------ | ------------------------------------ |
-| `/login`           | `app/(auth)/login/page.js`           |
-| `/sign-up`         | `app/(auth)/sign-up/page.js`         |
-| `/verify-email`    | `app/(auth)/verify-email/page.js`    |
-| `/forgot-password` | `app/(auth)/forgot-password/page.js` |
+| Path               | Planned file                                                                    |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `/login`           | `app/(auth)/login/page.js`                                                      |
+| `/sign-up`         | `app/(auth)/sign-up/page.js`                                                    |
+| `/verify-email`    | `app/(auth)/verify-email/page.js` — check your email, resend, and link outcomes |
+| `/forgot-password` | `app/(auth)/forgot-password/page.js`                                            |
 
 API Route Handlers will live under `app/api/` starting in Phase 2 (`app/api/auth/[...all]/route.js`, notes, tags, search).
 
@@ -50,7 +50,7 @@ Use private folders `_folder` for colocated non-route code inside `app/` when he
 app/           # routes and route-local UI only where colocation helps
 components/    # shared UI: app-shell/, forms/, ui/ (shadcn)
 features/      # domain-specific UI modules (later phases)
-lib/           # shared non-UI: validation, theme helpers, utilities
+lib/           # shared non-UI: validation, theme helpers, email (Resend), utilities
 hooks/         # shared React hooks
 tests/
   unit/        # Vitest + Testing Library

@@ -11,13 +11,40 @@ import { RhfField } from "@/components/forms/rhf-field";
 import { TextField } from "@/components/forms/fields/text-field";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
+import { toSafeCallbackPath } from "@/lib/auth/safe-callback-url";
 import { resendVerificationSchema } from "@/lib/validation/auth-schemas";
+
+function mapVerificationError(error) {
+  if (!error) {
+    return "Verification link is invalid or expired.";
+  }
+  if (error.status === 429) {
+    return "Too many attempts. Please wait a few minutes and try again.";
+  }
+  const message = error.message || "";
+  if (/expired/i.test(message)) {
+    return "This verification link has expired. Request a new email below.";
+  }
+  if (/invalid|already|used/i.test(message)) {
+    return "This verification link is invalid or was already used. Request a new email below.";
+  }
+  return message || "Verification link is invalid or expired.";
+}
 
 export function VerifyEmailPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const [statusMessage, setStatusMessage] = useState("");
+  const callbackURL = toSafeCallbackPath(searchParams.get("callbackURL"), "/");
+  const pendingSignup = searchParams.get("pending") === "1";
+  const [verifyPhase, setVerifyPhase] = useState(
+    token ? "verifying" : "pending"
+  );
+  const [statusMessage, setStatusMessage] = useState(
+    pendingSignup
+      ? "Account created. Check your inbox for a verification link."
+      : ""
+  );
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -29,29 +56,44 @@ export function VerifyEmailPanel() {
 
   useEffect(() => {
     if (!token) {
-      return;
+      let cancelled = false;
+      void authClient.getSession().then(({ data }) => {
+        if (cancelled) {
+          return;
+        }
+        if (data?.user?.emailVerified) {
+          router.replace("/");
+          router.refresh();
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
 
     let cancelled = false;
-    void authClient.verifyEmail({ query: { token } }).then(({ error }) => {
+
+    void authClient
+      .verifyEmail({ query: { token, callbackURL } })
+      .then(({ error }) => {
       if (cancelled) {
         return;
       }
       if (error) {
-        setFormError(
-          error.message || "Verification link is invalid or expired."
-        );
+        setVerifyPhase("failed");
+        setFormError(mapVerificationError(error));
         return;
       }
+      setVerifyPhase("success");
       setStatusMessage("Email verified. Redirecting you to the app…");
-      router.replace("/");
+      router.replace(callbackURL);
       router.refresh();
     });
 
     return () => {
       cancelled = true;
     };
-  }, [token, router]);
+  }, [token, callbackURL, router]);
 
   const onResend = methods.handleSubmit(async (values) => {
     setFormError("");
@@ -64,7 +106,15 @@ export function VerifyEmailPanel() {
     setPending(false);
 
     if (error) {
-      setFormError(error.message || "Unable to resend verification email.");
+      if (error.status === 429) {
+        setFormError(
+          "Too many requests. Please wait a few minutes before trying again."
+        );
+        return;
+      }
+      setFormError(
+        error.message || "Unable to send verification email. Try again later."
+      );
       return;
     }
 
@@ -74,16 +124,31 @@ export function VerifyEmailPanel() {
     methods.reset();
   });
 
+  const showResendForm =
+    verifyPhase !== "success" && verifyPhase !== "verifying";
+
   return (
     <div className="flex flex-col gap-4">
       <AuthMessage>{formError}</AuthMessage>
       <AuthMessage variant="success">{statusMessage}</AuthMessage>
-      {!token ? (
+      {verifyPhase === "verifying" ? (
+        <p className="text-body-sm text-muted-foreground" role="status">
+          Verifying your email…
+        </p>
+      ) : null}
+      {showResendForm ? (
         <>
-          <p className="text-body-sm text-muted-foreground">
-            We sent a verification link to your email. You can request another
-            message below.
-          </p>
+          {!token && verifyPhase !== "failed" ? (
+            <p className="text-body-sm text-muted-foreground">
+              We sent a verification link to your email. Open it to continue, or
+              request another message below.
+            </p>
+          ) : null}
+          {verifyPhase === "failed" ? (
+            <p className="text-body-sm text-muted-foreground">
+              Request a new verification email, or return to sign in.
+            </p>
+          ) : null}
           <FormProvider {...methods}>
             <form
               className="flex flex-col gap-4"

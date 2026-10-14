@@ -5,13 +5,13 @@
 
 ## Results
 
-| Integration           | Status                                            | Evidence                                                                                                                                                                      |
-| --------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Better Auth + MongoDB | **Compatible**                                    | `mongodbAdapter` from `@better-auth/mongo-adapter`; integration test `tests/integration/auth-mongo-spike.test.js` connects via `mongodb-memory-server` and loads `getAuth()`. |
-| Next.js App Router    | **Compatible**                                    | `app/api/auth/[...all]/route.js` uses `toNextJsHandler`; `nextCookies()` plugin configured; `(app)` layout uses server `requireSession()`.                                    |
-| Netlify Node runtime  | **Compatible (by design)**                        | DB/auth in Route Handlers and server modules only; global Mongo client reuse in `lib/db/client.js`; no Edge runtime for persistence.                                          |
-| Email verify / reset  | **Code complete; delivery needs SMTP**            | `lib/email/send-auth-email.js` sends when `SMTP_*` and `EMAIL_FROM` are set; dev/test no-op without SMTP.                                                                     |
-| Google OAuth          | **Code complete; needs Google Cloud credentials** | Enabled when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set; callback `…/api/auth/callback/google`.                                                                    |
+| Integration           | Status                                            | Evidence                                                                                                                                                                                                                |
+| --------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Better Auth + MongoDB | **Compatible**                                    | `mongodbAdapter` from `@better-auth/mongo-adapter`; integration test `tests/integration/auth-mongo-spike.test.js` connects via `mongodb-memory-server` and loads `getAuth()`.                                           |
+| Next.js App Router    | **Compatible**                                    | `app/api/auth/[...all]/route.js` uses `toNextJsHandler`; `nextCookies()` plugin configured; `(app)` layout uses server `requireSession()`.                                                                              |
+| Netlify Node runtime  | **Compatible (by design)**                        | DB/auth in Route Handlers and server modules only; global Mongo client reuse in `lib/db/client.js`; no Edge runtime for persistence.                                                                                    |
+| Email verify / reset  | **Resend (Phase 3)**                              | Better Auth callbacks use `lib/email/` (Resend adapter, HTML + plain-text templates). CI mocks transport; production needs verified domain + `RESEND_API_KEY` / `EMAIL_FROM`. See [`resend-email.md`](resend-email.md). |
+| Google OAuth          | **Code complete; needs Google Cloud credentials** | Enabled when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set; callback `…/api/auth/callback/google`.                                                                                                              |
 
 ## Atlas vs local Mongo
 
@@ -21,5 +21,5 @@
 ## Manual verification still required
 
 1. Configure real `MONGODB_URI`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` on Netlify preview.
-2. Configure SMTP for verification and password-reset emails.
+2. Configure Resend (`RESEND_API_KEY`, verified domain, `EMAIL_FROM`) for verification and password-reset delivery — see [`resend-email.md`](resend-email.md).
 3. Register Google OAuth redirect URIs for each deployment origin.
