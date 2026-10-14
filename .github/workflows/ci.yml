@@ -8,6 +8,12 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017/sknotes-ci
+      BETTER_AUTH_SECRET: ci-build-placeholder-secret-32-chars-min
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3000
+      MONGODB_USE_TRANSACTIONS: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

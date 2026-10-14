@@ -20,11 +20,12 @@ function TestForm({ onSubmit }) {
         hint="We will never share your email."
         required
         rules={{ required: "Email is required" }}
-        render={({ field, id, describedBy, invalid }) => (
+        render={({ field, id, describedBy, invalid, required }) => (
           <TextField
             id={id}
             describedBy={describedBy}
             invalid={invalid}
+            required={required}
             {...field}
           />
         )}
@@ -39,6 +40,7 @@ describe("RhfField", () => {
     render(<TestForm onSubmit={vi.fn()} />);
 
     const input = screen.getByLabelText(/email/i);
+    expect(input).toHaveAttribute("aria-required", "true");
     expect(input).toHaveAttribute("aria-describedby", "email-hint");
     expect(input).not.toHaveAttribute("aria-invalid");
     expect(screen.getByText(/never share/i)).toHaveAttribute(

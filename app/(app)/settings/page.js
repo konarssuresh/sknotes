@@ -1,4 +1,6 @@
 import { ThemePicker } from "@/components/settings/theme-picker";
+import { DeleteAccountForm } from "@/features/auth/delete-account-form";
+import { SignOutButton } from "@/features/auth/sign-out-button";
 
 export default function SettingsPage() {
   return (
@@ -8,15 +10,32 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="text-body-sm text-muted-foreground">
-          Account and profile controls arrive in Phase 6. Theme preference is
-          available now.
+          Manage your session, theme, and account.
         </p>
       </div>
+      <section
+        className="flex flex-col gap-3"
+        aria-labelledby="session-heading"
+      >
+        <h2 id="session-heading" className="text-label text-foreground">
+          Session
+        </h2>
+        <SignOutButton />
+      </section>
       <section className="flex flex-col gap-3" aria-labelledby="theme-heading">
         <h2 id="theme-heading" className="text-label text-foreground">
           Theme
         </h2>
         <ThemePicker />
+      </section>
+      <section
+        className="border-border flex flex-col gap-3 border-t pt-8"
+        aria-labelledby="account-heading"
+      >
+        <h2 id="account-heading" className="text-label text-foreground">
+          Account
+        </h2>
+        <DeleteAccountForm />
       </section>
     </div>
   );

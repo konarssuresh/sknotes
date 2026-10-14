@@ -58,6 +58,7 @@ export function RhfField({
               id: fieldId,
               describedBy,
               invalid: Boolean(fieldState.error),
+              required: Boolean(required),
             })}
           </FieldLayout>
         );
