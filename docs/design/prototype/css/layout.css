@@ -1,0 +1,319 @@
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  display: none;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-4);
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  z-index: var(--z-nav);
+}
+
+.sidebar__brand {
+  font-size: var(--font-size-title);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-6);
+  padding: var(--space-2);
+}
+
+.sidebar__create {
+  width: 100%;
+  margin-bottom: var(--space-6);
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.sidebar > .sidebar__link {
+  margin-top: auto;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-foreground);
+  text-decoration: none;
+  font-size: var(--font-size-body-sm);
+}
+
+.sidebar__link:hover {
+  text-decoration: none;
+  background: var(--color-accent-brand-muted);
+}
+
+.sidebar__link[aria-current="page"] {
+  background: var(--color-accent-brand-muted);
+  color: var(--color-accent-brand);
+  font-weight: var(--weight-medium);
+}
+
+.sidebar__divider {
+  height: 1px;
+  background: var(--color-border-subtle);
+  margin: var(--space-3) 0;
+}
+
+.sidebar__label {
+  font-size: var(--font-size-caption);
+  color: var(--color-foreground-muted);
+  padding: var(--space-2) var(--space-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.main-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-bottom: calc(
+    var(--bottom-nav-height) + env(safe-area-inset-bottom, 0)
+  );
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    display: flex;
+  }
+
+  .main-wrap {
+    padding-bottom: 0;
+  }
+}
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--header-height);
+  padding: 0 var(--space-page-x);
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-background);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.screen-header h1 {
+  flex: 1;
+  font-size: var(--font-size-title-lg);
+  font-weight: var(--weight-semibold);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.screen-content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-page-y) var(--space-page-x);
+}
+
+.screen-content--centered {
+  max-width: var(--list-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.screen-content--settings {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  min-height: var(--bottom-nav-height);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--color-surface-elevated);
+  border-top: 1px solid var(--color-border);
+  z-index: var(--z-nav);
+}
+
+@media (min-width: 768px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
+.bottom-nav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: var(--space-2);
+  color: var(--color-foreground-muted);
+  font-size: var(--font-size-caption);
+  text-decoration: none;
+}
+
+.bottom-nav__item[aria-current="page"] {
+  color: var(--color-accent-brand);
+}
+
+.bottom-nav__item:hover {
+  text-decoration: none;
+}
+
+.bottom-nav__create-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+  top: -8px;
+}
+
+.bottom-nav__create {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-brand);
+  color: var(--color-accent-brand-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.split__list {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-page-y) var(--space-page-x);
+  border-right: 1px solid var(--color-border-subtle);
+  max-width: 100%;
+}
+
+.split__detail {
+  display: none;
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .split--active .split__list {
+    max-width: 380px;
+    flex: 0 0 380px;
+  }
+
+  .split--active .split__detail {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.editor-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.review-panel {
+  position: fixed;
+  bottom: calc(
+    var(--bottom-nav-height) + env(safe-area-inset-bottom, 0) + var(--space-2)
+  );
+  right: var(--space-2);
+  z-index: var(--z-review);
+  max-width: 280px;
+}
+
+@media (min-width: 768px) {
+  .review-panel {
+    bottom: var(--space-2);
+  }
+}
+
+.review-panel__toggle {
+  float: right;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-caption);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.review-panel__body {
+  display: none;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: var(--font-size-caption);
+  box-shadow: var(--shadow-md);
+  clear: both;
+}
+
+.review-panel--open .review-panel__body {
+  display: block;
+}
+
+.review-panel label {
+  display: block;
+  margin-top: var(--space-2);
+}
+
+.review-panel select {
+  width: 100%;
+  margin-top: var(--space-1);
+  min-height: 36px;
+}

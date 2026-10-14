@@ -1,0 +1,35 @@
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-foreground);
+}
+
+.brand__symbol {
+  flex-shrink: 0;
+  color: var(--color-foreground);
+}
+
+.brand__wordmark {
+  font-size: var(--font-size-title-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.brand__word-sk {
+  color: var(--color-accent-brand);
+}
+
+.brand__word-notes {
+  color: var(--color-foreground);
+}
+
+.sidebar__brand .brand-lockup {
+  padding: var(--space-1) 0;
+}
+
+.brand-lockup--center {
+  justify-content: center;
+  margin-bottom: var(--space-8);
+}

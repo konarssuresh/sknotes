@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# SKNotes
 
-## Getting Started
+Personal, mobile-first notes app (Quiet Paper design). Production app: Next.js App Router, JavaScript, Tailwind CSS, and shadcn/ui.
 
-First, run the development server:
+## Documentation
+
+- [Product requirements](docs/requirements.md)
+- [Architecture](docs/architecture.md)
+- [Development plan](docs/development-plan.md)
+- [App conventions](docs/app-conventions.md) — routes, modules, testing, deploy
+
+Design specs live under [`docs/design/`](docs/design/). The HTML prototype is reference-only.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script                 | Description                        |
+| ---------------------- | ---------------------------------- |
+| `npm run dev`          | Development server                 |
+| `npm run build`        | Production build                   |
+| `npm run start`        | Start production server            |
+| `npm run lint`         | ESLint                             |
+| `npm run lint:fix`     | ESLint with auto-fix               |
+| `npm run format`       | Prettier write                     |
+| `npm run format:check` | Prettier check                     |
+| `npm test`             | Unit tests (Vitest)                |
+| `npm run test:watch`   | Vitest watch                       |
+| `npm run ci`           | lint + format:check + test + build |
 
-## Learn More
+## Environment
 
-To learn more about Next.js, take a look at the following resources:
+Copy [`.env.example`](.env.example) to `.env.local` when implementing backend/auth (Phase 2+). Do not commit real secrets.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Netlify configuration is in [`netlify.toml`](netlify.toml). Connect the repository in Netlify and set environment variables in the dashboard before preview/production deploys.
