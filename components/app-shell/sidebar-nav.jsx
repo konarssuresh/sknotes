@@ -59,7 +59,7 @@ export function SidebarNav() {
           />
         ))}
         <Link
-          href="/notes"
+          href="/notes/new"
           className={cn(
             buttonVariants({ size: "sm" }),
             "mt-2 w-full justify-start gap-2"

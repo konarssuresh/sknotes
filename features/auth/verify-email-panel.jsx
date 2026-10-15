@@ -76,19 +76,19 @@ export function VerifyEmailPanel() {
     void authClient
       .verifyEmail({ query: { token, callbackURL } })
       .then(({ error }) => {
-      if (cancelled) {
-        return;
-      }
-      if (error) {
-        setVerifyPhase("failed");
-        setFormError(mapVerificationError(error));
-        return;
-      }
-      setVerifyPhase("success");
-      setStatusMessage("Email verified. Redirecting you to the app…");
-      router.replace(callbackURL);
-      router.refresh();
-    });
+        if (cancelled) {
+          return;
+        }
+        if (error) {
+          setVerifyPhase("failed");
+          setFormError(mapVerificationError(error));
+          return;
+        }
+        setVerifyPhase("success");
+        setStatusMessage("Email verified. Redirecting you to the app…");
+        router.replace(callbackURL);
+        router.refresh();
+      });
 
     return () => {
       cancelled = true;

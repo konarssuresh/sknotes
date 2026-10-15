@@ -1,10 +1,14 @@
-import { PlaceholderPage } from "@/components/app-shell/placeholder-page";
+import { NotesList } from "@/features/notes/notes-list";
+
+export const metadata = {
+  title: "Notes — SKNotes",
+};
 
 export default function NotesPage() {
   return (
-    <PlaceholderPage
-      title="Notes"
-      description="Note lists, search, and infinite scroll are planned for Phase 4. The rich-text editor arrives in Phase 3."
-    />
+    <div className="mx-auto w-full max-w-(--content-max) space-y-6">
+      <h1 className="text-title font-semibold">Notes</h1>
+      <NotesList />
+    </div>
   );
 }

@@ -55,7 +55,7 @@ export function BottomNav() {
           active={isActive(pathname, home.href)}
         />
         <Link
-          href="/notes"
+          href="/notes/new"
           className="text-caption text-muted-foreground flex min-h-11 flex-col items-center justify-center gap-0.5 px-1 py-1.5"
           aria-label="Create note"
         >

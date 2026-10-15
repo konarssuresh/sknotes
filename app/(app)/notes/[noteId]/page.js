@@ -1,12 +1,21 @@
-import { PlaceholderPage } from "@/components/app-shell/placeholder-page";
+import { NoteEditorScreen } from "@/features/notes/note-editor-screen";
+import { requireVerifiedSession } from "@/lib/auth/session";
+
+export const metadata = {
+  title: "Note — SKNotes",
+};
+
+export const instant = false;
 
 export default async function NoteEditorPage({ params }) {
   const { noteId } = await params;
+  const session = await requireVerifiedSession();
+
+  if (noteId === "new") {
+    return <NoteEditorScreen userId={session.user.id} noteId="new" isNew />;
+  }
 
   return (
-    <PlaceholderPage
-      title="Note"
-      description={`Editor and autosave for note “${noteId}” are not implemented yet (Phase 3).`}
-    />
+    <NoteEditorScreen userId={session.user.id} noteId={noteId} isNew={false} />
   );
 }

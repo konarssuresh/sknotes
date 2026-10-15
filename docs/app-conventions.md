@@ -30,7 +30,9 @@ Production Next.js App Router conventions for implementers. Product behavior rem
 | `/verify-email`    | `app/(auth)/verify-email/page.js` — check your email, resend, and link outcomes |
 | `/forgot-password` | `app/(auth)/forgot-password/page.js`                                            |
 
-API Route Handlers will live under `app/api/` starting in Phase 2 (`app/api/auth/[...all]/route.js`, notes, tags, search).
+API Route Handlers live under `app/api/` (`app/api/auth/[...all]/route.js`, `app/api/notes/…`, account deletion). Tags and search routes arrive in later phases.
+
+Signed-in note editing uses `/notes/new` for local drafts and `/notes/[noteId]` for persisted notes. The `(app)` layout wraps TanStack Query via `components/providers/query-provider.jsx`.
 
 ## Next.js file conventions
 
