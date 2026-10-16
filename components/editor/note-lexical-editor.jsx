@@ -20,6 +20,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { editorTheme } from "@/components/editor/editor-theme";
 import { createEmptyLexicalContent } from "@/lib/domain/notes/defaults";
+import { isSafeUrl } from "@/lib/domain/notes/safe-url";
 
 function onError(error) {
   console.error("[editor]", error);
@@ -82,7 +83,7 @@ export function NoteLexicalEditor({ editorKey, initialContent, onChange }) {
       <FocusBodyPlugin />
       <HistoryPlugin />
       <ListPlugin />
-      <LinkPlugin />
+      <LinkPlugin validateUrl={isSafeUrl} />
       <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       <OnChangePlugin
         onChange={(editorState) => {

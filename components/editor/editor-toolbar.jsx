@@ -1,6 +1,5 @@
 "use client";
 
-import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
@@ -9,18 +8,23 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
 import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND } from "lexical";
 import { $setBlocksType } from "@lexical/selection";
-import { $findMatchingParent } from "@lexical/utils";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
+import { LinkEditorPanel } from "@/components/editor/link-editor-panel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { isSafeUrl } from "@/lib/domain/notes/safe-url";
+import {
+  applyLinkUpdate,
+  readLinkFormState,
+} from "@/lib/editor/apply-editor-link";
 
 export function EditorToolbar() {
   const [editor] = useLexicalComposerContext();
   const [linkOpen, setLinkOpen] = useState(false);
+  const [linkText, setLinkText] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
-  const [linkError, setLinkError] = useState("");
+  const [urlError, setUrlError] = useState("");
+  const [textError, setTextError] = useState("");
+  const savedSelectionRef = useRef(null);
 
   const formatBold = () => {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
@@ -60,40 +64,70 @@ export function EditorToolbar() {
     editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
   };
 
+  const closeLinkEditor = useCallback(
+    (restoreFocus = true) => {
+      setLinkOpen(false);
+      setUrlError("");
+      setTextError("");
+      savedSelectionRef.current = null;
+      if (restoreFocus) {
+        editor.focus();
+      }
+    },
+    [editor]
+  );
+
   const openLinkEditor = useCallback(() => {
     editor.getEditorState().read(() => {
       const selection = $getSelection();
-      if (!$isRangeSelection(selection)) {
-        setLinkUrl("");
-        setLinkOpen(true);
-        return;
-      }
-      const node = selection.anchor.getNode();
-      const linkParent = $findMatchingParent(node, $isLinkNode);
-      if (linkParent && $isLinkNode(linkParent)) {
-        setLinkUrl(linkParent.getURL());
+      if ($isRangeSelection(selection)) {
+        savedSelectionRef.current = selection.clone();
+        const formState = readLinkFormState(selection);
+        setLinkText(formState.text);
+        setLinkUrl(formState.url);
       } else {
+        savedSelectionRef.current = null;
+        setLinkText("");
         setLinkUrl("");
       }
+      setUrlError("");
+      setTextError("");
       setLinkOpen(true);
-      setLinkError("");
     });
   }, [editor]);
 
-  const applyLink = () => {
-    const url = linkUrl.trim();
-    if (!url) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-      setLinkOpen(false);
+  const applyLink = async () => {
+    setUrlError("");
+    setTextError("");
+
+    let result = { ok: false, error: "NO_SELECTION" };
+    await editor.update(() => {
+      result = applyLinkUpdate({
+        url: linkUrl,
+        text: linkText,
+        savedSelection: savedSelectionRef.current,
+      });
+    });
+
+    if (!result.ok) {
+      if (result.error === "INVALID_URL") {
+        setUrlError("This URL is not allowed.");
+      } else if (result.error === "TEXT_REQUIRED") {
+        setTextError("Enter link text.");
+      }
       return;
     }
-    if (!isSafeUrl(url)) {
-      setLinkError("This URL is not allowed.");
+
+    closeLinkEditor(true);
+  };
+
+  const handleLinkButtonMouseDown = (event) => {
+    event.preventDefault();
+    if (linkOpen) {
+      closeLinkEditor(false);
       return;
     }
-    editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
-    setLinkOpen(false);
-    setLinkError("");
+    openLinkEditor();
   };
 
   return (
@@ -129,35 +163,27 @@ export function EditorToolbar() {
       <Button type="button" variant="ghost" size="sm" onClick={formatCode}>
         Code
       </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={openLinkEditor}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        aria-expanded={linkOpen}
+        aria-haspopup="dialog"
+        onMouseDown={handleLinkButtonMouseDown}
+      >
         Link
       </Button>
       {linkOpen ? (
-        <div className="flex w-full flex-wrap items-end gap-2 pt-2">
-          <div className="min-w-[12rem] flex-1">
-            <Input
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://"
-              aria-label="Link URL"
-              aria-invalid={Boolean(linkError)}
-            />
-            {linkError ? (
-              <p className="text-destructive text-caption mt-1">{linkError}</p>
-            ) : null}
-          </div>
-          <Button type="button" size="sm" onClick={applyLink}>
-            Save link
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => setLinkOpen(false)}
-          >
-            Cancel
-          </Button>
-        </div>
+        <LinkEditorPanel
+          linkText={linkText}
+          linkUrl={linkUrl}
+          urlError={urlError}
+          textError={textError}
+          onLinkTextChange={setLinkText}
+          onLinkUrlChange={setLinkUrl}
+          onSubmit={applyLink}
+          onCancel={() => closeLinkEditor(true)}
+        />
       ) : null}
     </div>
   );
