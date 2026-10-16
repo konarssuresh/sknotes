@@ -1,6 +1,6 @@
 "use client";
 
-/* eslint-disable react-hooks/preserve-manual-memoization -- autosave queue relies on stable manual callbacks */
+/* eslint-disable react-hooks/preserve-manual-memoization, react-hooks/refs -- autosave queue relies on stable manual callbacks and latest handler refs */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -30,6 +30,14 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
   const queued = useRef(false);
   const lastConfirmedFingerprint = useRef(null);
   const lastError = useRef(null);
+  const paused = useRef(false);
+
+  const getPayloadRef = useRef(getPayload);
+  const saveRef = useRef(save);
+  const enabledRef = useRef(enabled);
+  getPayloadRef.current = getPayload;
+  saveRef.current = save;
+  enabledRef.current = enabled;
 
   const clearTimers = useCallback(() => {
     if (debounceTimer.current) {
@@ -42,8 +50,14 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
     }
   }, []);
 
-  const runSave = useCallback(async () => {
-    const payload = getPayload();
+  const runSave = useCallback(async (options = {}) => {
+    const { propagateError = false } = options;
+
+    if (paused.current) {
+      return;
+    }
+
+    const payload = getPayloadRef.current();
     if (!payload) {
       return;
     }
@@ -59,10 +73,10 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
       do {
         queued.current = false;
         try {
-          await save(current);
+          await saveRef.current(current);
           lastConfirmedFingerprint.current = current.fingerprint;
           lastError.current = null;
-          const latest = getPayload();
+          const latest = getPayloadRef.current();
           if (
             !latest ||
             latest.fingerprint === lastConfirmedFingerprint.current
@@ -73,17 +87,20 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
           }
         } catch (error) {
           lastError.current = error;
+          if (error?.isConflict) {
+            paused.current = true;
+            queued.current = false;
+            clearTimers();
+            firstKeystrokeAt.current = null;
+            return;
+          }
           setStatus("error");
-          throw error;
+          if (propagateError) {
+            throw error;
+          }
+          return;
         }
-        current = getPayload();
-        if (
-          current &&
-          current.fingerprint !== lastConfirmedFingerprint.current
-        ) {
-          continue;
-        }
-        break;
+        current = getPayloadRef.current();
       } while (
         queued.current ||
         (current && current.fingerprint !== lastConfirmedFingerprint.current)
@@ -95,15 +112,23 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
       await chain;
     } finally {
       inFlight.current = null;
-      if (queued.current) {
+      if (queued.current && !paused.current) {
         queued.current = false;
-        void runSave();
+        const followUp = getPayloadRef.current();
+        if (
+          followUp &&
+          followUp.fingerprint !== lastConfirmedFingerprint.current
+        ) {
+          void runSave();
+        }
+      } else {
+        queued.current = false;
       }
     }
-  }, [getPayload, save]);
+  }, [clearTimers]);
 
   const schedule = useCallback(() => {
-    if (!enabled) {
+    if (!enabledRef.current || paused.current) {
       return;
     }
     onSchedule?.();
@@ -130,12 +155,12 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
       debounceTimer.current = null;
       void runSave();
     }, AUTOSAVE_DEBOUNCE_MS);
-  }, [clearTimers, enabled, onSchedule, runSave]);
+  }, [clearTimers, onSchedule, runSave]);
 
   const flush = useCallback(async () => {
     clearTimers();
     firstKeystrokeAt.current = null;
-    const payload = getPayload();
+    const payload = getPayloadRef.current();
     if (!payload) {
       return;
     }
@@ -146,10 +171,13 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
     ) {
       return;
     }
-    await runSave();
-  }, [clearTimers, getPayload, runSave]);
+    await runSave({ propagateError: true });
+  }, [clearTimers, runSave]);
 
   const retry = useCallback(() => {
+    if (paused.current) {
+      return;
+    }
     void runSave();
   }, [runSave]);
 
@@ -161,18 +189,19 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
   const resetBaseline = useCallback((fingerprint) => {
     lastConfirmedFingerprint.current = fingerprint;
     lastError.current = null;
+    paused.current = false;
     setStatus("idle");
   }, []);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
 
   const isDirty = useCallback(() => {
-    const payload = getPayload();
+    const payload = getPayloadRef.current();
     if (!payload) {
       return false;
     }
     return payload.fingerprint !== lastConfirmedFingerprint.current;
-  }, [getPayload]);
+  }, []);
 
   const needsNavigationGuard = useCallback(() => {
     return (

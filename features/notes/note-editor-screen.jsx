@@ -84,44 +84,68 @@ function NoteEditorClient({
   const markSavedRef = useRef(null);
   const autosavePaused = conflictOpen;
 
-  const persistRecovery = useCallback(() => {
+  const draftRef = useRef({
+    title: initialTitle,
+    content: initialContent,
+    revision: initialRevision,
+    serverNoteId: initialServerNoteId,
+  });
+
+  const persistRecoveryFromRef = useCallback(() => {
+    const { title: t, content: c } = draftRef.current;
     writeRecoveryDraft(userId, draftKey, {
-      title,
-      content,
+      title: t,
+      content: c,
       savedAt: new Date().toISOString(),
     });
-  }, [userId, draftKey, title, content]);
+  }, [userId, draftKey]);
 
   const getPayload = useCallback(() => {
     if (autosavePaused) {
       return null;
     }
-    if (!hasMeaningfulContent({ title, content })) {
+    const {
+      title: t,
+      content: c,
+      revision: rev,
+      serverNoteId: id,
+    } = draftRef.current;
+    if (!hasMeaningfulContent({ title: t, content: c })) {
       return null;
     }
-    const fp = fingerprintNote(title, content);
+    const fp = fingerprintNote(t, c);
     return {
       fingerprint: fp,
-      title,
-      content,
-      revision,
-      serverNoteId,
+      title: t,
+      content: c,
+      revision: rev,
+      serverNoteId: id,
     };
-  }, [autosavePaused, title, content, revision, serverNoteId]);
+  }, [autosavePaused]);
 
   const save = useCallback(
     async (payload) => {
-      persistRecovery();
       const { title: t, content: c, revision: rev, serverNoteId: id } = payload;
 
       if (!id) {
         const created = await createNoteRequest({ title: t, content: c });
+        draftRef.current = {
+          ...draftRef.current,
+          serverNoteId: created.id,
+          revision: created.revision,
+        };
         setServerNoteId(created.id);
         setRevision(created.revision);
-        clearRecoveryDraft(userId, "new");
+        const latestFp = fingerprintNote(
+          draftRef.current.title,
+          draftRef.current.content
+        );
+        if (latestFp === payload.fingerprint) {
+          clearRecoveryDraft(userId, "new");
+        }
         writeRecoveryDraft(userId, created.id, {
-          title: t,
-          content: c,
+          title: draftRef.current.title,
+          content: draftRef.current.content,
           savedAt: new Date().toISOString(),
         });
         queryClient.setQueryData(noteKeys.detail(created.id), created);
@@ -137,10 +161,17 @@ function NoteEditorClient({
           title: t,
           content: c,
         });
+        draftRef.current.revision = updated.revision;
         setRevision(updated.revision);
         queryClient.setQueryData(noteKeys.detail(id), updated);
         queryClient.invalidateQueries({ queryKey: noteKeys.list() });
-        clearRecoveryDraft(userId, id);
+        const latestFp = fingerprintNote(
+          draftRef.current.title,
+          draftRef.current.content
+        );
+        if (latestFp === payload.fingerprint) {
+          clearRecoveryDraft(userId, id);
+        }
         markSavedRef.current?.(payload.fingerprint);
       } catch (err) {
         if (err.isConflict && err.conflictDetails?.serverNote) {
@@ -150,23 +181,24 @@ function NoteEditorClient({
         throw err;
       }
     },
-    [persistRecovery, queryClient, router, userId]
+    [queryClient, router, userId]
   );
 
   const autosave = useAutosave({
     enabled: !autosavePaused,
     getPayload,
     save,
-    onSchedule: persistRecovery,
+    onSchedule: persistRecoveryFromRef,
   });
 
   useEffect(() => {
     markSavedRef.current = autosave.markSaved;
   }, [autosave.markSaved]);
 
+  const resetBaseline = autosave.resetBaseline;
   useEffect(() => {
-    autosave.resetBaseline(fingerprintNote(initialTitle, initialContent));
-  }, [autosave, initialTitle, initialContent]);
+    resetBaseline(fingerprintNote(initialTitle, initialContent));
+  }, [resetBaseline, initialTitle, initialContent]);
 
   useEffect(() => {
     const handler = (event) => {
@@ -180,15 +212,17 @@ function NoteEditorClient({
   }, [autosave]);
 
   const handleTitleChange = (value) => {
+    draftRef.current = { ...draftRef.current, title: value };
     setTitle(value);
+    persistRecoveryFromRef();
     autosave.schedule();
-    persistRecovery();
   };
 
   const handleContentChange = (value) => {
+    draftRef.current = { ...draftRef.current, content: value };
     setContent(value);
+    persistRecoveryFromRef();
     autosave.schedule();
-    persistRecovery();
   };
 
   const handleBack = useCallback(async () => {
@@ -213,15 +247,22 @@ function NoteEditorClient({
     if (!serverConflictNote) {
       return;
     }
-    setTitle(serverConflictNote.title ?? "");
-    setContent(serverConflictNote.content ?? createEmptyLexicalContent());
+    const nextTitle = serverConflictNote.title ?? "";
+    const nextContent =
+      serverConflictNote.content ?? createEmptyLexicalContent();
+    draftRef.current = {
+      ...draftRef.current,
+      title: nextTitle,
+      content: nextContent,
+      revision: serverConflictNote.revision,
+    };
+    setTitle(nextTitle);
+    setContent(nextContent);
     setRevision(serverConflictNote.revision);
     setEditorKey(
       `editor-${serverConflictNote.id}-server-${serverConflictNote.revision}`
     );
-    autosave.resetBaseline(
-      fingerprintNote(serverConflictNote.title, serverConflictNote.content)
-    );
+    autosave.resetBaseline(fingerprintNote(nextTitle, nextContent));
     setConflictOpen(false);
     setServerConflictNote(null);
   };
@@ -230,13 +271,15 @@ function NoteEditorClient({
     if (!serverConflictNote || !serverNoteId) {
       return;
     }
-    const fp = fingerprintNote(title, content);
+    const { title: t, content: c } = draftRef.current;
+    const fp = fingerprintNote(t, c);
     try {
       const updated = await updateNoteRequest(serverNoteId, {
         expectedRevision: serverConflictNote.revision,
-        title,
-        content,
+        title: t,
+        content: c,
       });
+      draftRef.current.revision = updated.revision;
       setRevision(updated.revision);
       setEditorKey(`editor-${serverNoteId}-mine-${updated.revision}`);
       autosave.resetBaseline(fp);
