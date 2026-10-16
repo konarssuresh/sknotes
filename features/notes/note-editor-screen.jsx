@@ -5,17 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { EditorOverflowMenu } from "@/components/editor/editor-overflow-menu";
 import { ConflictDialog } from "@/components/editor/conflict-dialog";
 import { LeaveDialog } from "@/components/editor/leave-dialog";
+import { NoteTagsSheet } from "@/components/editor/note-tags-sheet";
 import { NoteLexicalEditor } from "@/components/editor/note-lexical-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { invalidateNoteListCaches } from "@/features/notes/note-cache";
 import {
   createNoteRequest,
+  downloadNoteExport,
   fetchNote,
   updateNoteRequest,
 } from "@/features/notes/note-api";
 import { noteKeys } from "@/features/notes/query-keys";
+import { TrashNoteScreen } from "@/features/notes/trash-note-screen";
 import {
   clearRecoveryDraft,
   readRecoveryDraft,
@@ -57,6 +62,9 @@ function SaveStatus({ status, onRetry }) {
  *   initialContent: unknown;
  *   initialRevision: number;
  *   initialServerNoteId: string | null;
+ *   initialPinned: boolean;
+ *   initialStatus: string;
+ *   initialTagIds: string[];
  *   editorKey: string;
  * }} props
  */
@@ -67,6 +75,9 @@ function NoteEditorClient({
   initialContent,
   initialRevision,
   initialServerNoteId,
+  initialPinned,
+  initialStatus,
+  initialTagIds,
   editorKey: initialEditorKey,
 }) {
   const router = useRouter();
@@ -76,6 +87,10 @@ function NoteEditorClient({
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [revision, setRevision] = useState(initialRevision);
+  const [pinned, setPinned] = useState(initialPinned);
+  const [status, setStatus] = useState(initialStatus);
+  const [tagIds, setTagIds] = useState(initialTagIds);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [editorKey, setEditorKey] = useState(initialEditorKey);
   const [conflictOpen, setConflictOpen] = useState(false);
   const [serverConflictNote, setServerConflictNote] = useState(null);
@@ -149,7 +164,7 @@ function NoteEditorClient({
           savedAt: new Date().toISOString(),
         });
         queryClient.setQueryData(noteKeys.detail(created.id), created);
-        queryClient.invalidateQueries({ queryKey: noteKeys.list() });
+        invalidateNoteListCaches(queryClient);
         router.replace(`/notes/${created.id}`);
         markSavedRef.current?.(payload.fingerprint);
         return;
@@ -164,7 +179,7 @@ function NoteEditorClient({
         draftRef.current.revision = updated.revision;
         setRevision(updated.revision);
         queryClient.setQueryData(noteKeys.detail(id), updated);
-        queryClient.invalidateQueries({ queryKey: noteKeys.list() });
+        invalidateNoteListCaches(queryClient);
         const latestFp = fingerprintNote(
           draftRef.current.title,
           draftRef.current.content
@@ -267,6 +282,27 @@ function NoteEditorClient({
     setServerConflictNote(null);
   };
 
+  const applyMetaUpdate = useCallback(
+    async (patch) => {
+      if (!serverNoteId) {
+        return null;
+      }
+      const updated = await updateNoteRequest(serverNoteId, {
+        expectedRevision: draftRef.current.revision,
+        ...patch,
+      });
+      draftRef.current.revision = updated.revision;
+      setRevision(updated.revision);
+      setPinned(updated.pinned);
+      setStatus(updated.status);
+      setTagIds(updated.tagIds ?? []);
+      queryClient.setQueryData(noteKeys.detail(serverNoteId), updated);
+      invalidateNoteListCaches(queryClient);
+      return updated;
+    },
+    [queryClient, serverNoteId]
+  );
+
   const resolveKeepMine = async () => {
     if (!serverConflictNote || !serverNoteId) {
       return;
@@ -295,7 +331,7 @@ function NoteEditorClient({
   };
 
   return (
-    <div className="mx-auto w-full max-w-(--content-max)">
+    <div className="relative mx-auto w-full max-w-(--content-max)">
       <header className="mb-4 flex items-center justify-between gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={handleBack}>
           ← Back
@@ -303,7 +339,29 @@ function NoteEditorClient({
         <div aria-live="polite" className="min-w-[6rem] text-center">
           <SaveStatus status={autosave.status} onRetry={autosave.retry} />
         </div>
-        <span className="w-12" aria-hidden />
+        {serverNoteId ? (
+          <EditorOverflowMenu
+            pinned={pinned}
+            status={status}
+            onPinToggle={() => void applyMetaUpdate({ pinned: !pinned })}
+            onTags={() => setTagsOpen(true)}
+            onArchive={async () => {
+              await applyMetaUpdate({ status: "archived" });
+              router.push("/archive");
+            }}
+            onUnarchive={() => void applyMetaUpdate({ status: "active" })}
+            onTrash={async () => {
+              await applyMetaUpdate({ status: "trashed" });
+              router.push("/trash");
+            }}
+            onExportMarkdown={() =>
+              void downloadNoteExport(serverNoteId, "markdown")
+            }
+            onExportText={() => void downloadNoteExport(serverNoteId, "text")}
+          />
+        ) : (
+          <span className="w-12" aria-hidden />
+        )}
       </header>
       <Input
         value={title}
@@ -316,6 +374,15 @@ function NoteEditorClient({
         editorKey={editorKey}
         initialContent={content}
         onChange={handleContentChange}
+      />
+      <NoteTagsSheet
+        open={tagsOpen}
+        selectedIds={tagIds}
+        onClose={() => setTagsOpen(false)}
+        onChange={(next) => {
+          setTagIds(next);
+          void applyMetaUpdate({ tagIds: next });
+        }}
       />
       <ConflictDialog
         open={conflictOpen}
@@ -363,6 +430,9 @@ export function NoteEditorScreen({ userId, noteId, isNew = false }) {
         editorKey={
           recovery ? `editor-recovery-new-${recovery.savedAt}` : "editor-new"
         }
+        initialPinned={false}
+        initialStatus="active"
+        initialTagIds={[]}
       />
     );
   }
@@ -396,6 +466,10 @@ export function NoteEditorScreen({ userId, noteId, isNew = false }) {
     );
   }
 
+  if (loadedNote.status === "trashed") {
+    return <TrashNoteScreen note={loadedNote} />;
+  }
+
   return (
     <NoteEditorClient
       key={loadedNote.id}
@@ -405,6 +479,9 @@ export function NoteEditorScreen({ userId, noteId, isNew = false }) {
       initialContent={loadedNote.content ?? createEmptyLexicalContent()}
       initialRevision={loadedNote.revision}
       initialServerNoteId={loadedNote.id}
+      initialPinned={loadedNote.pinned}
+      initialStatus={loadedNote.status}
+      initialTagIds={loadedNote.tagIds ?? []}
       editorKey={`editor-${loadedNote.id}-${loadedNote.revision}`}
     />
   );

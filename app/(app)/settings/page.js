@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ThemePicker } from "@/components/settings/theme-picker";
 import { DeleteAccountForm } from "@/features/auth/delete-account-form";
 import { SignOutButton } from "@/features/auth/sign-out-button";
@@ -21,6 +23,25 @@ export default function SettingsPage() {
           Session
         </h2>
         <SignOutButton />
+      </section>
+      <section
+        className="flex flex-col gap-3"
+        aria-labelledby="library-heading"
+      >
+        <h2 id="library-heading" className="text-label text-foreground">
+          Library
+        </h2>
+        <nav className="flex flex-col gap-2 text-sm">
+          <Link href="/tags" className="hover:underline">
+            Tags
+          </Link>
+          <Link href="/archive" className="hover:underline">
+            Archive
+          </Link>
+          <Link href="/trash" className="hover:underline">
+            Trash
+          </Link>
+        </nav>
       </section>
       <section className="flex flex-col gap-3" aria-labelledby="theme-heading">
         <h2 id="theme-heading" className="text-label text-foreground">

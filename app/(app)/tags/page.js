@@ -1,10 +1,9 @@
-import { PlaceholderPage } from "@/components/app-shell/placeholder-page";
+import { TagsScreen } from "@/features/tags/tags-screen";
+
+export const metadata = {
+  title: "Tags — SKNotes",
+};
 
 export default function TagsPage() {
-  return (
-    <PlaceholderPage
-      title="Tags"
-      description="Tag management and filters are planned for Phase 4."
-    />
-  );
+  return <TagsScreen />;
 }

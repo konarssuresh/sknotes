@@ -1,10 +1,20 @@
-import { PlaceholderPage } from "@/components/app-shell/placeholder-page";
+import { Suspense } from "react";
+
+import { NotesInfiniteList } from "@/features/notes/notes-infinite-list";
+
+export const metadata = {
+  title: "Trash — SKNotes",
+};
 
 export default function TrashPage() {
   return (
-    <PlaceholderPage
-      title="Trash"
-      description="Trashed notes and restore flows are planned for Phase 4."
-    />
+    <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
+      <NotesInfiniteList
+        status="trashed"
+        title="Trash"
+        showSearch={false}
+        emptyTitle="Trash is empty"
+      />
+    </Suspense>
   );
 }

@@ -50,82 +50,85 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
     }
   }, []);
 
-  const runSave = useCallback(async (options = {}) => {
-    const { propagateError = false } = options;
+  const runSave = useCallback(
+    async (options = {}) => {
+      const { propagateError = false } = options;
 
-    if (paused.current) {
-      return;
-    }
+      if (paused.current) {
+        return;
+      }
 
-    const payload = getPayloadRef.current();
-    if (!payload) {
-      return;
-    }
+      const payload = getPayloadRef.current();
+      if (!payload) {
+        return;
+      }
 
-    if (inFlight.current) {
-      queued.current = true;
-      return;
-    }
+      if (inFlight.current) {
+        queued.current = true;
+        return;
+      }
 
-    setStatus("saving");
-    const chain = (async () => {
-      let current = payload;
-      do {
-        queued.current = false;
-        try {
-          await saveRef.current(current);
-          lastConfirmedFingerprint.current = current.fingerprint;
-          lastError.current = null;
-          const latest = getPayloadRef.current();
-          if (
-            !latest ||
-            latest.fingerprint === lastConfirmedFingerprint.current
-          ) {
-            setStatus("saved");
-          } else {
-            setStatus("pending");
-          }
-        } catch (error) {
-          lastError.current = error;
-          if (error?.isConflict) {
-            paused.current = true;
-            queued.current = false;
-            clearTimers();
-            firstKeystrokeAt.current = null;
+      setStatus("saving");
+      const chain = (async () => {
+        let current = payload;
+        do {
+          queued.current = false;
+          try {
+            await saveRef.current(current);
+            lastConfirmedFingerprint.current = current.fingerprint;
+            lastError.current = null;
+            const latest = getPayloadRef.current();
+            if (
+              !latest ||
+              latest.fingerprint === lastConfirmedFingerprint.current
+            ) {
+              setStatus("saved");
+            } else {
+              setStatus("pending");
+            }
+          } catch (error) {
+            lastError.current = error;
+            if (error?.isConflict) {
+              paused.current = true;
+              queued.current = false;
+              clearTimers();
+              firstKeystrokeAt.current = null;
+              return;
+            }
+            setStatus("error");
+            if (propagateError) {
+              throw error;
+            }
             return;
           }
-          setStatus("error");
-          if (propagateError) {
-            throw error;
-          }
-          return;
-        }
-        current = getPayloadRef.current();
-      } while (
-        queued.current ||
-        (current && current.fingerprint !== lastConfirmedFingerprint.current)
-      );
-    })();
+          current = getPayloadRef.current();
+        } while (
+          queued.current ||
+          (current && current.fingerprint !== lastConfirmedFingerprint.current)
+        );
+      })();
 
-    inFlight.current = chain;
-    try {
-      await chain;
-    } finally {
-      inFlight.current = null;
-      if (queued.current && !paused.current) {
-        queued.current = false;
-        const followUp = getPayloadRef.current();
-        if (
-          followUp &&
-          followUp.fingerprint !== lastConfirmedFingerprint.current
-        ) {
-          void runSave();
+      inFlight.current = chain;
+      try {
+        await chain;
+      } finally {
+        inFlight.current = null;
+        if (queued.current && !paused.current) {
+          queued.current = false;
+          const followUp = getPayloadRef.current();
+          if (
+            followUp &&
+            followUp.fingerprint !== lastConfirmedFingerprint.current
+          ) {
+            void runSave();
+          }
+        } else {
+          queued.current = false;
         }
-      } else {
-        queued.current = false;
       }
-    }
-  }, [clearTimers]);
+    },
+    [clearTimers]
+  );
 
   const schedule = useCallback(() => {
     if (!enabledRef.current || paused.current) {

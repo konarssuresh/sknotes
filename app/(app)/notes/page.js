@@ -1,4 +1,6 @@
-import { NotesList } from "@/features/notes/notes-list";
+import { Suspense } from "react";
+
+import { NotesInfiniteList } from "@/features/notes/notes-infinite-list";
 
 export const metadata = {
   title: "Notes — SKNotes",
@@ -6,9 +8,8 @@ export const metadata = {
 
 export default function NotesPage() {
   return (
-    <div className="mx-auto w-full max-w-(--content-max) space-y-6">
-      <h1 className="text-title font-semibold">Notes</h1>
-      <NotesList />
-    </div>
+    <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
+      <NotesInfiniteList status="active" title="Notes" />
+    </Suspense>
   );
 }

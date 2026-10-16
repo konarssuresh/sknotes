@@ -1,3 +1,4 @@
+import { deleteNotePermanently } from "@/lib/application/notes/delete-note";
 import { getNote } from "@/lib/application/notes/get-note";
 import { updateNote } from "@/lib/application/notes/update-note";
 import { requireApiSession } from "@/lib/auth/require-api-session";
@@ -54,6 +55,31 @@ export async function PATCH(request, context) {
       { note },
       { headers: { [REQUEST_ID_HEADER]: requestId } }
     );
+  } catch (error) {
+    return handleRouteError(error, requestId);
+  }
+}
+
+export async function DELETE(request, context) {
+  const requestId = getOrCreateRequestId(request);
+  const { noteId } = await context.params;
+
+  try {
+    const session = await requireApiSession(request);
+    const ip = getClientIp(request);
+
+    await consumeRateLimit({
+      key: `notes-delete:${session.user.id}:${ip}`,
+      windowSeconds: 60,
+      max: 30,
+    });
+
+    await deleteNotePermanently(session.user.id, noteId);
+
+    return new Response(null, {
+      status: 204,
+      headers: { [REQUEST_ID_HEADER]: requestId },
+    });
   } catch (error) {
     return handleRouteError(error, requestId);
   }

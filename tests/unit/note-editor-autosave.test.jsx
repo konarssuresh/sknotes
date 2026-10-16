@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NoteEditorScreen } from "@/features/notes/note-editor-screen";
@@ -76,15 +82,16 @@ describe("NoteEditorScreen autosave", () => {
   it("uses response revision and latest draft on follow-up save", async () => {
     let resolveFirst;
     updateNoteRequest
-      .mockImplementationOnce((_, body) =>
-        new Promise((resolve) => {
-          resolveFirst = () =>
-            resolve({
-              ...baseNote,
-              title: body.title,
-              revision: 2,
-            });
-        })
+      .mockImplementationOnce(
+        (_, body) =>
+          new Promise((resolve) => {
+            resolveFirst = () =>
+              resolve({
+                ...baseNote,
+                title: body.title,
+                revision: 2,
+              });
+          })
       )
       .mockImplementation((_, body) =>
         Promise.resolve({
@@ -121,15 +128,16 @@ describe("NoteEditorScreen autosave", () => {
   it("coalesces rapid edits during one save into a single follow-up", async () => {
     let resolveFirst;
     updateNoteRequest
-      .mockImplementationOnce((_, body) =>
-        new Promise((resolve) => {
-          resolveFirst = () =>
-            resolve({
-              ...baseNote,
-              title: body.title,
-              revision: 2,
-            });
-        })
+      .mockImplementationOnce(
+        (_, body) =>
+          new Promise((resolve) => {
+            resolveFirst = () =>
+              resolve({
+                ...baseNote,
+                title: body.title,
+                revision: 2,
+              });
+          })
       )
       .mockResolvedValue({
         ...baseNote,
