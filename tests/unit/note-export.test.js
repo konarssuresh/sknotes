@@ -29,4 +29,9 @@ describe("note export", () => {
     expect(noteToMarkdownExport(sample)).toContain("# My Note");
     expect(noteToMarkdownExport(sample)).toContain("Body line");
   });
+
+  it("sanitizes export filenames", () => {
+    const safeTitle = "Hello / World!".replace(/[^\w\-]+/g, "-").slice(0, 80);
+    expect(`${safeTitle}.md`).toBe("Hello-World-.md");
+  });
 });

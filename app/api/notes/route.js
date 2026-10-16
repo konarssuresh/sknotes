@@ -23,14 +23,16 @@ export async function GET(request) {
     const query = listNotesQuerySchema.parse({
       status: url.searchParams.get("status") ?? undefined,
       limit: url.searchParams.get("limit") ?? undefined,
+      cursor: url.searchParams.get("cursor"),
+      tagId: url.searchParams.get("tagId"),
+      pinned: url.searchParams.get("pinned"),
     });
 
-    const notes = await listNotes(session.user.id, query);
+    const page = await listNotes(session.user.id, query);
 
-    return Response.json(
-      { notes },
-      { headers: { [REQUEST_ID_HEADER]: requestId } }
-    );
+    return Response.json(page, {
+      headers: { [REQUEST_ID_HEADER]: requestId },
+    });
   } catch (error) {
     return handleRouteError(error, requestId);
   }

@@ -1,10 +1,9 @@
-import { PlaceholderPage } from "@/components/app-shell/placeholder-page";
+import { HomeScreen } from "@/features/home/home-screen";
+
+export const metadata = {
+  title: "Home — SKNotes",
+};
 
 export default function HomePage() {
-  return (
-    <PlaceholderPage
-      title="Home"
-      description="Application foundation is in place. Pinned notes, search, and recent lists arrive in later phases."
-    />
-  );
+  return <HomeScreen />;
 }

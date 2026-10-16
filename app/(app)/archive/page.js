@@ -1,10 +1,19 @@
-import { PlaceholderPage } from "@/components/app-shell/placeholder-page";
+import { Suspense } from "react";
+
+import { NotesInfiniteList } from "@/features/notes/notes-infinite-list";
+
+export const metadata = {
+  title: "Archive — SKNotes",
+};
 
 export default function ArchivePage() {
   return (
-    <PlaceholderPage
-      title="Archive"
-      description="Archived notes will appear here in a later phase."
-    />
+    <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
+      <NotesInfiniteList
+        status="archived"
+        title="Archive"
+        emptyTitle="No archived notes"
+      />
+    </Suspense>
   );
 }
