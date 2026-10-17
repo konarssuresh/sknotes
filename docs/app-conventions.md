@@ -91,13 +91,15 @@ Application source is JavaScript/JSX only. `typescript` is a **devDependency** f
 
 ## Testing
 
-| Command              | Purpose                                       |
-| -------------------- | --------------------------------------------- |
-| `npm test`           | Unit tests (Vitest, single run)               |
-| `npm run test:watch` | Vitest watch mode                             |
-| `npm run ci`         | lint + format check + test + production build |
+| Command               | Purpose                                                            |
+| --------------------- | ------------------------------------------------------------------ |
+| `npm test`            | Unit tests (Vitest, single run)                                    |
+| `npm run test:watch`  | Vitest watch mode                                                  |
+| `npm run ci`          | lint + format check + unit tests + production build                |
+| `npm run test:e2e`    | Playwright E2E (starts memory Mongo + `next build` + `next start`) |
+| `npm run test:e2e:ci` | Same as `test:e2e`; used in the GitHub `e2e` job                   |
 
-Integration and E2E suites are added in later phases per [`development-plan.md`](development-plan.md).
+E2E runs with `E2E_TEST_MODE=1` (set by [`tests/e2e/web-server.mjs`](../tests/e2e/web-server.mjs)). A verified fixture user is seeded via `POST /api/e2e/seed` before tests; auth setup signs in through `POST /api/auth/sign-in/email` and saves `tests/e2e/.auth/user.json` for the browser projects. Install browsers once with `npx playwright install chromium`.
 
 ## Deploy / Netlify preview
 
