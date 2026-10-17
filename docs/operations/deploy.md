@@ -54,6 +54,7 @@ Rollback does not revert MongoDB writes made during a bad release; pair deploy r
 
 ## Related
 
+- [Release checklist](./release-checklist.md)
 - [Environment](./environment.md)
 - [Monitoring](./monitoring.md)
 - [Resend email setup](../integrations/resend-email.md)

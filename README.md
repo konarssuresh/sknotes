@@ -9,7 +9,7 @@ Personal, mobile-first notes app (Quiet Paper design). Production app: Next.js A
 - [Development plan](docs/development-plan.md)
 - [Resend email setup](docs/integrations/resend-email.md) — verification and password reset (Phase 3)
 - [App conventions](docs/app-conventions.md) — routes, modules, testing, deploy
-- [Operations](docs/operations/) — environment, deploy, backups, monitoring, security
+- [Operations](docs/operations/) — environment, deploy, backups, monitoring, security, [release checklist](docs/operations/release-checklist.md)
 
 Design specs live under [`docs/design/`](docs/design/). The HTML prototype is reference-only.
 
