@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,10 +12,17 @@ import { PasswordField } from "@/components/forms/fields/password-field";
 import { TextField } from "@/components/forms/fields/text-field";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
+import {
+  clearClientSessionState,
+  purgeUserOfflineData,
+} from "@/lib/offline/client-session";
 import { deleteAccountSchema } from "@/lib/validation/auth-schemas";
 
 export function DeleteAccountForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -47,6 +55,10 @@ export function DeleteAccountForm() {
       return;
     }
 
+    if (userId) {
+      await purgeUserOfflineData(userId);
+    }
+    clearClientSessionState(queryClient);
     await authClient.signOut();
     router.replace("/login");
     router.refresh();

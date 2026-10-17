@@ -66,9 +66,9 @@ describe("NoteEditorScreen autosave", () => {
     updateNoteRequest.mockReset();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.useRealTimers();
-    clearRecoveryDraft(USER_ID, NOTE_ID);
+    await clearRecoveryDraft(USER_ID, NOTE_ID);
   });
 
   async function mountEditor() {
@@ -237,11 +237,16 @@ describe("NoteEditorScreen autosave", () => {
       await Promise.resolve();
     });
 
-    expect(readRecoveryDraft(USER_ID, NOTE_ID)?.title).toBe("Retry title");
+    vi.useRealTimers();
+    expect((await readRecoveryDraft(USER_ID, NOTE_ID))?.title).toBe(
+      "Retry title"
+    );
     expect(screen.getByText("Couldn't save")).toBeInTheDocument();
 
     await act(async () => {
       screen.getByRole("button", { name: /retry/i }).click();
+      await Promise.resolve();
+      await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
     });

@@ -10,7 +10,7 @@ import {
 } from "@/lib/notes/autosave-constants";
 
 /**
- * @typedef {"idle" | "pending" | "saving" | "saved" | "error"} SaveStatus
+ * @typedef {"idle" | "pending" | "saving" | "saved" | "error" | "queued"} SaveStatus
  */
 
 /**
@@ -93,6 +93,10 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
               queued.current = false;
               clearTimers();
               firstKeystrokeAt.current = null;
+              return;
+            }
+            if (error?.isOfflineQueued) {
+              setStatus("queued");
               return;
             }
             setStatus("error");
@@ -210,6 +214,7 @@ export function useAutosave({ enabled, getPayload, save, onSchedule }) {
     return (
       status === "saving" ||
       status === "pending" ||
+      status === "queued" ||
       status === "error" ||
       isDirty()
     );

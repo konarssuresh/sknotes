@@ -27,8 +27,18 @@ import {
   writeRecoveryDraft,
 } from "@/features/notes/recovery-draft";
 import { useAutosave } from "@/features/notes/use-autosave";
+import { useOnlineStatus } from "@/features/offline/use-online-status";
 import { createEmptyLexicalContent } from "@/lib/domain/notes/defaults";
 import { hasMeaningfulContent } from "@/lib/domain/notes/meaningful-content";
+import {
+  isBrowserOnline,
+  isQueueableNetworkError,
+  OfflineQueuedError,
+} from "@/lib/offline/network";
+import {
+  enqueueNoteMutation,
+  flushMutationQueue,
+} from "@/lib/offline/sync-queue";
 
 function fingerprintNote(title, content) {
   return JSON.stringify({ title, content });
@@ -37,6 +47,11 @@ function fingerprintNote(title, content) {
 function SaveStatus({ status, onRetry }) {
   if (status === "saving" || status === "pending") {
     return <span className="text-caption text-muted-foreground">Saving…</span>;
+  }
+  if (status === "queued") {
+    return (
+      <span className="text-caption text-muted-foreground">Pending sync</span>
+    );
   }
   if (status === "saved") {
     return <span className="text-caption text-muted-foreground">Saved</span>;
@@ -82,6 +97,7 @@ function NoteEditorClient({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const online = useOnlineStatus();
 
   const [serverNoteId, setServerNoteId] = useState(initialServerNoteId);
   const [title, setTitle] = useState(initialTitle);
@@ -108,12 +124,42 @@ function NoteEditorClient({
 
   const persistRecoveryFromRef = useCallback(() => {
     const { title: t, content: c } = draftRef.current;
-    writeRecoveryDraft(userId, draftKey, {
+    void writeRecoveryDraft(userId, draftKey, {
       title: t,
       content: c,
       savedAt: new Date().toISOString(),
     });
   }, [userId, draftKey]);
+
+  const queueCurrentPayload = useCallback(
+    async (payload) => {
+      const { title: t, content: c, revision: rev, serverNoteId: id } = payload;
+      if (!id) {
+        await enqueueNoteMutation(userId, {
+          noteId: "new",
+          op: "create",
+          title: t,
+          content: c,
+          expectedRevision: null,
+          fingerprint: payload.fingerprint,
+          attempts: 0,
+          createdAt: new Date().toISOString(),
+        });
+        return;
+      }
+      await enqueueNoteMutation(userId, {
+        noteId: id,
+        op: "update",
+        title: t,
+        content: c,
+        expectedRevision: rev,
+        fingerprint: payload.fingerprint,
+        attempts: 0,
+        createdAt: new Date().toISOString(),
+      });
+    },
+    [userId]
+  );
 
   const getPayload = useCallback(() => {
     if (autosavePaused) {
@@ -138,12 +184,12 @@ function NoteEditorClient({
     };
   }, [autosavePaused]);
 
-  const save = useCallback(
-    async (payload) => {
-      const { title: t, content: c, revision: rev, serverNoteId: id } = payload;
-
-      if (!id) {
-        const created = await createNoteRequest({ title: t, content: c });
+  const applyFlushHandlers = useCallback(
+    () => ({
+      onNoteCreated: (created, mutation) => {
+        if (mutation.noteId !== "new") {
+          return;
+        }
         draftRef.current = {
           ...draftRef.current,
           serverNoteId: created.id,
@@ -155,10 +201,11 @@ function NoteEditorClient({
           draftRef.current.title,
           draftRef.current.content
         );
-        if (latestFp === payload.fingerprint) {
-          clearRecoveryDraft(userId, "new");
+        if (latestFp === mutation.fingerprint) {
+          void clearRecoveryDraft(userId, "new");
+          markSavedRef.current?.(mutation.fingerprint);
         }
-        writeRecoveryDraft(userId, created.id, {
+        void writeRecoveryDraft(userId, created.id, {
           title: draftRef.current.title,
           content: draftRef.current.content,
           savedAt: new Date().toISOString(),
@@ -166,8 +213,77 @@ function NoteEditorClient({
         queryClient.setQueryData(noteKeys.detail(created.id), created);
         invalidateNoteListCaches(queryClient);
         router.replace(`/notes/${created.id}`);
-        markSavedRef.current?.(payload.fingerprint);
-        return;
+      },
+      onNoteUpdated: (updated, mutation) => {
+        if (mutation.noteId !== draftRef.current.serverNoteId) {
+          return;
+        }
+        draftRef.current.revision = updated.revision;
+        setRevision(updated.revision);
+        queryClient.setQueryData(noteKeys.detail(updated.id), updated);
+        invalidateNoteListCaches(queryClient);
+        const latestFp = fingerprintNote(
+          draftRef.current.title,
+          draftRef.current.content
+        );
+        if (latestFp === mutation.fingerprint) {
+          void clearRecoveryDraft(userId, updated.id);
+          markSavedRef.current?.(mutation.fingerprint);
+        }
+      },
+      onConflict: (err) => {
+        if (err.conflictDetails?.serverNote) {
+          setServerConflictNote(err.conflictDetails.serverNote);
+          setConflictOpen(true);
+        }
+      },
+    }),
+    [queryClient, router, userId]
+  );
+
+  const save = useCallback(
+    async (payload) => {
+      const { title: t, content: c, revision: rev, serverNoteId: id } = payload;
+
+      if (!isBrowserOnline()) {
+        await queueCurrentPayload(payload);
+        throw new OfflineQueuedError();
+      }
+
+      if (!id) {
+        try {
+          const created = await createNoteRequest({ title: t, content: c });
+          draftRef.current = {
+            ...draftRef.current,
+            serverNoteId: created.id,
+            revision: created.revision,
+          };
+          setServerNoteId(created.id);
+          setRevision(created.revision);
+          const latestFp = fingerprintNote(
+            draftRef.current.title,
+            draftRef.current.content
+          );
+          if (latestFp === payload.fingerprint) {
+            clearRecoveryDraft(userId, "new");
+          }
+          writeRecoveryDraft(userId, created.id, {
+            title: draftRef.current.title,
+            content: draftRef.current.content,
+            savedAt: new Date().toISOString(),
+          });
+          queryClient.setQueryData(noteKeys.detail(created.id), created);
+          invalidateNoteListCaches(queryClient);
+          router.replace(`/notes/${created.id}`);
+          markSavedRef.current?.(payload.fingerprint);
+          return;
+        } catch (err) {
+          if (!err?.isConflict && isQueueableNetworkError(err)) {
+            await queueCurrentPayload(payload);
+            throw new OfflineQueuedError();
+          }
+          throw err;
+        }
       }
 
       try {
@@ -192,11 +308,14 @@ function NoteEditorClient({
         if (err.isConflict && err.conflictDetails?.serverNote) {
           setServerConflictNote(err.conflictDetails.serverNote);
           setConflictOpen(true);
+        } else if (isQueueableNetworkError(err)) {
+          await queueCurrentPayload(payload);
+          throw new OfflineQueuedError();
         }
         throw err;
       }
     },
-    [queryClient, router, userId]
+    [queryClient, queueCurrentPayload, router, userId]
   );
 
   const autosave = useAutosave({
@@ -225,6 +344,18 @@ function NoteEditorClient({
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [autosave]);
+
+  useEffect(() => {
+    if (!online) {
+      return;
+    }
+    void flushMutationQueue(userId, applyFlushHandlers());
+  }, [applyFlushHandlers, online, userId]);
+
+  const handleSaveRetry = useCallback(async () => {
+    await flushMutationQueue(userId, applyFlushHandlers());
+    autosave.retry();
+  }, [applyFlushHandlers, autosave, userId]);
 
   const handleTitleChange = (value) => {
     draftRef.current = { ...draftRef.current, title: value };
@@ -337,7 +468,7 @@ function NoteEditorClient({
           ← Back
         </Button>
         <div aria-live="polite" className="min-w-[6rem] text-center">
-          <SaveStatus status={autosave.status} onRetry={autosave.retry} />
+          <SaveStatus status={autosave.status} onRetry={handleSaveRetry} />
         </div>
         {serverNoteId ? (
           <EditorOverflowMenu
@@ -402,6 +533,52 @@ function NoteEditorClient({
 }
 
 /**
+ * @param {{ userId: string }} props
+ */
+function NewNoteEditor({ userId }) {
+  const [recovery, setRecovery] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void readRecoveryDraft(userId, "new").then((draft) => {
+      if (!cancelled) {
+        setRecovery(draft);
+        setReady(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  if (!ready) {
+    return (
+      <div className="mx-auto w-full max-w-(--content-max)">
+        <p className="text-muted-foreground">Loading draft…</p>
+      </div>
+    );
+  }
+
+  return (
+    <NoteEditorClient
+      userId={userId}
+      draftKey="new"
+      initialTitle={recovery?.title ?? ""}
+      initialContent={recovery?.content ?? createEmptyLexicalContent()}
+      initialRevision={1}
+      initialServerNoteId={null}
+      editorKey={
+        recovery ? `editor-recovery-new-${recovery.savedAt}` : "editor-new"
+      }
+      initialPinned={false}
+      initialStatus="active"
+      initialTagIds={[]}
+    />
+  );
+}
+
+/**
  * @param {{ userId: string; noteId: string; isNew?: boolean }} props
  */
 export function NoteEditorScreen({ userId, noteId, isNew = false }) {
@@ -418,23 +595,7 @@ export function NoteEditorScreen({ userId, noteId, isNew = false }) {
   });
 
   if (isNew) {
-    const recovery = readRecoveryDraft(userId, "new");
-    return (
-      <NoteEditorClient
-        userId={userId}
-        draftKey="new"
-        initialTitle={recovery?.title ?? ""}
-        initialContent={recovery?.content ?? createEmptyLexicalContent()}
-        initialRevision={1}
-        initialServerNoteId={null}
-        editorKey={
-          recovery ? `editor-recovery-new-${recovery.savedAt}` : "editor-new"
-        }
-        initialPinned={false}
-        initialStatus="active"
-        initialTagIds={[]}
-      />
-    );
+    return <NewNoteEditor userId={userId} />;
   }
 
   if (isLoading) {

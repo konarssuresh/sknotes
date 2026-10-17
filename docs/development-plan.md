@@ -10,6 +10,9 @@
 - The prototype has follow-up scope for SKNotes branding/logo and mock Login/Sign up screens, requested after the initial review.
 - Phase 1 application foundation and Phase 2 backend, database, and authentication are implemented (Better Auth, MongoDB, auth UI, route protection, and email callback hooks).
 - Phase 3 transactional email and account verification are implemented (Resend, branded templates, verified-email gates, tests). Production delivery still requires operator Resend domain verification and Netlify env configuration.
+- Phase 4 notes core and rich-text editor are implemented (Lexical, debounced autosave, recovery drafts, revision conflicts).
+- Phase 5 organization, search, and retrieval are implemented (tags, pins, lifecycle, server search, cursor pagination, export).
+- Phase 6 limited offline resilience is in progress (IndexedDB drafts and mutation queue, sync indicators, logout/account cleanup).
 
 ## Delivery principles
 
