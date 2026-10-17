@@ -33,7 +33,7 @@ Policy helpers are unit-tested in [`tests/unit/pwa-cache-policy.test.js`](../../
 
 ## User workaround: “This page couldn’t load” (normal tab, Incognito works)
 
-Usually stale service worker or cache after a deploy. **iPhone Chrome:** ⋮ → Settings → Privacy and security → Clear Browsing Data → **All time** → enable **Cached images and files** and **Cookies, site data** → clear, then open the site in a normal tab (sign in again). Remove any Home Screen shortcut and re-open in Chrome if needed.
+Usually stale service worker or cache after a deploy. The app cannot fix itself until **new** HTML runs; if you are stuck, clear site data once. **iPhone Chrome:** ⋮ → Settings → **Privacy and security** → **Clear Browsing Data** → **All time** → turn on **Cached images and files** and **Cookies, site data** → clear → open `https://sknotes-app.netlify.app` in a normal tab (sign in again). If it still fails, also delete the **Home Screen** icon (long-press → Remove) and avoid opening the PWA shortcut until the site loads in Chrome.
 
 ## Manual cross-account check
 

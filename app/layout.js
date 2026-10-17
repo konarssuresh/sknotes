@@ -4,6 +4,7 @@ import { ChunkLoadRecovery } from "@/components/pwa/chunk-load-recovery";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { readGeneratedVersions } from "@/lib/pwa/read-generated-versions";
+import { getPwaVersionSyncInlineScript } from "@/lib/pwa/version-sync-inline-script";
 import { getThemeInlineScript } from "@/lib/theme/theme-inline-script";
 
 import "./globals.css";
@@ -40,6 +41,9 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="sknotes-sw-version" content={swVersion} />
         <meta name="sknotes-build-id" content={buildId} />
+        <script
+          dangerouslySetInnerHTML={{ __html: getPwaVersionSyncInlineScript() }}
+        />
         <script dangerouslySetInnerHTML={{ __html: getThemeInlineScript() }} />
       </head>
       <body className="flex min-h-dvh flex-col">

@@ -15,11 +15,17 @@ describe("syncSwVersionWithMeta", () => {
     localStorage.clear();
   });
 
-  it("stores version on first visit", async () => {
+  it("clears caches and stores version on first tracked deploy", async () => {
     await syncSwVersionWithMeta("1.0.0-abc-2026-10-17");
     expect(localStorage.getItem(SW_VERSION_STORAGE_KEY)).toBe(
       "1.0.0-abc-2026-10-17"
     );
+    expect(clearCaches).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips work when version unchanged", async () => {
+    localStorage.setItem(SW_VERSION_STORAGE_KEY, "same");
+    await syncSwVersionWithMeta("same");
     expect(clearCaches).not.toHaveBeenCalled();
   });
 
