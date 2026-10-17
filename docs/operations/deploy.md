@@ -23,7 +23,7 @@ Connect the GitHub repository in Netlify, set **production branch** to `main`, a
 
 From `netlify.toml`:
 
-- **Build command:** `npm run build`
+- **Build command:** `npm run build` (runs [`scripts/inject-sw-version.mjs`](../../scripts/inject-sw-version.mjs) first so each deploy gets a fresh `SKNOTES_SW_VERSION` in [`public/sw.js`](../../public/sw.js))
 - **Plugin:** `@netlify/plugin-nextjs` (handles Next.js routing and serverless functions)
 
 Environment variables are **not** in the repo. Configure MongoDB, Better Auth, Resend, and OAuth credentials in the Netlify UI for each context.

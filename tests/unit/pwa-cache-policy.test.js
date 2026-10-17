@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  NEXT_STATIC_CACHE_STRATEGY,
+  getStaticAssetCacheStrategy,
   isNetworkOnlyPath,
   isStaticPrecacheCandidate,
 } from "@/lib/pwa/cache-policy";
@@ -25,5 +27,14 @@ describe("PWA cache policy", () => {
     expect(isStaticPrecacheCandidate("/icon.svg")).toBe(true);
     expect(isStaticPrecacheCandidate("/icons/icon-192.png")).toBe(true);
     expect(isStaticPrecacheCandidate("/notes")).toBe(false);
+  });
+
+  it("uses network-first for Next static chunks (not cache-first)", () => {
+    expect(NEXT_STATIC_CACHE_STRATEGY).toBe("network-first");
+    expect(getStaticAssetCacheStrategy("/_next/static/chunks/foo.js")).toBe(
+      "network-first"
+    );
+    expect(getStaticAssetCacheStrategy("/icon.svg")).toBe("cache-first");
+    expect(getStaticAssetCacheStrategy("/notes")).toBe(null);
   });
 });
