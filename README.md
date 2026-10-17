@@ -9,6 +9,7 @@ Personal, mobile-first notes app (Quiet Paper design). Production app: Next.js A
 - [Development plan](docs/development-plan.md)
 - [Resend email setup](docs/integrations/resend-email.md) — verification and password reset (Phase 3)
 - [App conventions](docs/app-conventions.md) — routes, modules, testing, deploy
+- [Operations](docs/operations/) — environment, deploy, backups, monitoring, security
 
 Design specs live under [`docs/design/`](docs/design/). The HTML prototype is reference-only.
 
@@ -23,18 +24,19 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Script                 | Description                        |
-| ---------------------- | ---------------------------------- |
-| `npm run dev`          | Development server                 |
-| `npm run build`        | Production build                   |
-| `npm run start`        | Start production server            |
-| `npm run lint`         | ESLint                             |
-| `npm run lint:fix`     | ESLint with auto-fix               |
-| `npm run format`       | Prettier write                     |
-| `npm run format:check` | Prettier check                     |
-| `npm test`             | Unit tests (Vitest)                |
-| `npm run test:watch`   | Vitest watch                       |
-| `npm run ci`           | lint + format:check + test + build |
+| Script                 | Description                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `npm run dev`          | Development server                                                                                |
+| `npm run build`        | Production build                                                                                  |
+| `npm run start`        | Start production server                                                                           |
+| `npm run lint`         | ESLint                                                                                            |
+| `npm run lint:fix`     | ESLint with auto-fix                                                                              |
+| `npm run format`       | Prettier write                                                                                    |
+| `npm run format:check` | Prettier check                                                                                    |
+| `npm test`             | Unit tests (Vitest)                                                                               |
+| `npm run test:watch`   | Vitest watch                                                                                      |
+| `npm run ci`           | lint + format:check + test + build                                                                |
+| `npm run audit:ci`     | `npm audit` (high severity and above) — see [security-review](docs/operations/security-review.md) |
 
 ## Environment
 
