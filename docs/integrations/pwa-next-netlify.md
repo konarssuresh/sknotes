@@ -17,7 +17,7 @@ Netlify continues to run `npm run build` and publish via the Next plugin ([`netl
 
 ## Caching policy
 
-1. **Precache:** `/_next/static/*`, `/icon.svg`, and `/icons/*` only. Bump `SKNOTES_SW_VERSION` in `public/sw.js` when shipped static assets change.
+1. **Runtime cache:** `/_next/static/*` uses **network-first** (offline fallback to cache). `/icon.svg` and `/icons/*` may use cache. Bump `SKNOTES_SW_VERSION` in `public/sw.js` on every production deploy that changes client bundles.
 2. **Network-only:** `/api/*`, auth pages, and all signed-in app routes (`/`, `/notes/*`, `/tags`, `/settings`, archive/trash, etc.). Document navigations are never stored in Cache Storage.
 3. **Cookies / sessions:** No `cache.put` on HTML or API responses; default handler is `fetch()` only.
 4. **Logout:** [`clearClientSessionState`](../offline-resilience.md) clears TanStack Query and deletes all Cache Storage keys so another account on the same browser profile does not reuse cached shells.

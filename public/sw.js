@@ -2,7 +2,7 @@
  * SKNotes production service worker — static precache only; sensitive routes are network-only.
  * Bump SKNOTES_SW_VERSION on each deploy that changes cached assets.
  */
-const SKNOTES_SW_VERSION = "2026-10-17";
+const SKNOTES_SW_VERSION = "2026-10-17-network-first";
 const PRECACHE = `sknotes-static-${SKNOTES_SW_VERSION}`;
 
 const PRECACHE_URLS = ["/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
@@ -82,17 +82,22 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.pathname.startsWith("/_next/static/")) {
+    // Network-first: cache-first served stale chunks after deploy and crashed the app.
     event.respondWith(
       caches.open(PRECACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        if (cached) {
-          return cached;
+        try {
+          const response = await fetch(request);
+          if (response.ok) {
+            await cache.put(request, response.clone());
+          }
+          return response;
+        } catch {
+          const cached = await cache.match(request);
+          if (cached) {
+            return cached;
+          }
+          return fetch(request);
         }
-        const response = await fetch(request);
-        if (response.ok) {
-          await cache.put(request, response.clone());
-        }
-        return response;
       })
     );
     return;
