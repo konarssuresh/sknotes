@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { getThemeInlineScript } from "@/lib/theme/theme-inline-script";
 
@@ -18,6 +19,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "SKNotes",
   description: "Personal notes — capture quickly, find reliably.",
+  appleWebApp: {
+    capable: true,
+    title: "SKNotes",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -32,6 +38,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="flex min-h-dvh flex-col">
         <ThemeProvider>
+          <ServiceWorkerRegister />
           <div className="flex min-h-dvh flex-1 flex-col">{children}</div>
         </ThemeProvider>
       </body>

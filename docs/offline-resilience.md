@@ -19,5 +19,5 @@
 
 ## Session boundaries
 
-- **Logout:** warns when pending mutations exist; clears TanStack Query caches; retains IndexedDB data for the same user id.
+- **Logout:** warns when pending mutations exist; clears TanStack Query caches and **Cache Storage** (PWA service worker caches); retains IndexedDB data for the same user id.
 - **Account deletion:** server data is removed via Better Auth `beforeDelete`; client purges the user IndexedDB database and legacy localStorage keys.

@@ -101,6 +101,12 @@ Application source is JavaScript/JSX only. `typescript` is a **devDependency** f
 
 E2E runs with `E2E_TEST_MODE=1` (set by [`tests/e2e/web-server.mjs`](../tests/e2e/web-server.mjs)). A verified fixture user is seeded via `POST /api/e2e/seed` before tests; auth setup signs in through `POST /api/auth/sign-in/email` and saves `tests/e2e/.auth/user.json` for the browser projects. Install browsers once with `npx playwright install chromium`.
 
+## PWA (installable app)
+
+- Manifest: [`app/manifest.js`](../app/manifest.js); icons from [`app/icon.svg`](../app/icon.svg) and `public/icons/` (`npm run icons:pwa`).
+- Service worker: [`public/sw.js`](../public/sw.js) — static precache only; signed-in routes and `/api/*` are network-only. See [`docs/integrations/pwa-next-netlify.md`](integrations/pwa-next-netlify.md).
+- Registration runs in production builds only; set `NEXT_PUBLIC_E2E_PWA=1` to test locally.
+
 ## Deploy / Netlify preview
 
 - Build command: `npm run build` (see [`netlify.toml`](../netlify.toml)).
