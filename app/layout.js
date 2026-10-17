@@ -1,7 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { ChunkLoadRecovery } from "@/components/pwa/chunk-load-recovery";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { readGeneratedVersions } from "@/lib/pwa/read-generated-versions";
 import { getThemeInlineScript } from "@/lib/theme/theme-inline-script";
 
 import "./globals.css";
@@ -27,6 +29,8 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const { swVersion, buildId } = readGeneratedVersions();
+
   return (
     <html
       lang="en"
@@ -34,10 +38,13 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning
     >
       <head>
+        <meta name="sknotes-sw-version" content={swVersion} />
+        <meta name="sknotes-build-id" content={buildId} />
         <script dangerouslySetInnerHTML={{ __html: getThemeInlineScript() }} />
       </head>
       <body className="flex min-h-dvh flex-col">
         <ThemeProvider>
+          <ChunkLoadRecovery />
           <ServiceWorkerRegister />
           <div className="flex min-h-dvh flex-1 flex-col">{children}</div>
         </ThemeProvider>

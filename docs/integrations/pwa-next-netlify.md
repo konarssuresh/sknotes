@@ -29,6 +29,11 @@ Policy helpers are unit-tested in [`tests/unit/pwa-cache-policy.test.js`](../../
 - **Production:** SW registers on load.
 - **Development:** disabled (avoids stale caches while iterating).
 - **E2E / manual PWA checks:** set `NEXT_PUBLIC_E2E_PWA=1` to register in non-production builds.
+- **After deploy:** clients compare `meta[name=sknotes-sw-version]` with stored version, clear Cache Storage when it changes, activate waiting workers (`SKIP_WAITING`), and reload once. Chunk / RSC load failures trigger a single automatic reload before showing [`app/global-error.js`](../../app/global-error.js).
+
+## User workaround: “This page couldn’t load” (normal tab, Incognito works)
+
+Usually stale service worker or cache after a deploy. **iPhone Chrome:** ⋮ → Settings → Privacy and security → Clear Browsing Data → **All time** → enable **Cached images and files** and **Cookies, site data** → clear, then open the site in a normal tab (sign in again). Remove any Home Screen shortcut and re-open in Chrome if needed.
 
 ## Manual cross-account check
 
