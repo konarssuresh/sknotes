@@ -59,7 +59,7 @@ export function BottomNav() {
           className="text-caption text-muted-foreground flex min-h-11 flex-col items-center justify-center gap-0.5 px-1 py-1.5"
           aria-label="Create note"
         >
-          <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-full shadow-sm">
+          <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-full shadow-sm">
             <NavIcon name="create" className="size-5" />
           </span>
           <span className="leading-none">Create</span>

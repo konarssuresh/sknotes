@@ -101,6 +101,11 @@ Application source is JavaScript/JSX only. `typescript` is a **devDependency** f
 
 E2E runs with `E2E_TEST_MODE=1` (set by [`tests/e2e/web-server.mjs`](../tests/e2e/web-server.mjs)). A verified fixture user is seeded via `POST /api/e2e/seed` before tests; auth setup signs in through `POST /api/auth/sign-in/email` and saves `tests/e2e/.auth/user.json` for the browser projects. Install browsers once with `npx playwright install chromium`.
 
+## Accessibility
+
+- WCAG 2.2 AA target for core flows; audit log in [`accessibility-audit.md`](accessibility-audit.md).
+- Modals use [`ModalShell`](../components/a11y/modal-shell.jsx) for focus trap; axe checks in [`tests/e2e/a11y-public.spec.mjs`](../tests/e2e/a11y-public.spec.mjs) and [`tests/e2e/a11y-authenticated.spec.mjs`](../tests/e2e/a11y-authenticated.spec.mjs).
+
 ## PWA (installable app)
 
 - Manifest: [`app/manifest.js`](../app/manifest.js); icons from [`app/icon.svg`](../app/icon.svg) and `public/icons/` (`npm run icons:pwa`).

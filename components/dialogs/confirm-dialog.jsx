@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatedOverlay } from "@/components/motion/animated-presence";
+import { ModalShell } from "@/components/a11y/modal-shell";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -30,16 +30,12 @@ export function ConfirmDialog({
   }
 
   return (
-    <AnimatedOverlay
+    <ModalShell
       open={open}
+      titleId="confirm-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        className="bg-popover border-border w-full max-w-md rounded-lg border p-6 shadow-lg"
-      >
+      <div className="bg-popover border-border w-full max-w-md rounded-lg border p-6 shadow-lg">
         <h2 id="confirm-dialog-title" className="text-title font-semibold">
           {title}
         </h2>
@@ -59,6 +55,6 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </AnimatedOverlay>
+    </ModalShell>
   );
 }

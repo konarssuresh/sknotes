@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { AnimatedOverlay } from "@/components/motion/animated-presence";
+import { ModalShell } from "@/components/a11y/modal-shell";
 import { Button } from "@/components/ui/button";
 import { tagKeys } from "@/features/notes/query-keys";
 import { fetchTags } from "@/features/tags/tag-api";
@@ -36,16 +36,12 @@ export function NoteTagsSheet({ open, selectedIds, onClose, onChange }) {
   };
 
   return (
-    <AnimatedOverlay
+    <ModalShell
       open={open}
+      titleId="tags-sheet-title"
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="tags-sheet-title"
-        className="bg-popover border-border w-full max-w-md rounded-t-lg border p-6 shadow-lg sm:rounded-lg"
-      >
+      <div className="bg-popover border-border w-full max-w-md rounded-t-lg border p-6 shadow-lg sm:rounded-lg">
         <h2 id="tags-sheet-title" className="text-title font-semibold">
           Tags
         </h2>
@@ -80,6 +76,6 @@ export function NoteTagsSheet({ open, selectedIds, onClose, onChange }) {
           </Button>
         </div>
       </div>
-    </AnimatedOverlay>
+    </ModalShell>
   );
 }

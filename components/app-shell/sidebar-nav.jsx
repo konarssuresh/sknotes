@@ -21,7 +21,7 @@ function NavLink({ href, label, icon, active }) {
       className={cn(
         "flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
         active
-          ? "bg-accent text-primary"
+          ? "bg-muted text-foreground font-semibold"
           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       )}
       aria-current={active ? "page" : undefined}

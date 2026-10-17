@@ -54,7 +54,7 @@ export function LoginForm() {
         <p className="text-body-sm text-center">
           <Link
             href="/verify-email"
-            className="text-primary underline-offset-4 hover:underline"
+            className="text-primary underline underline-offset-4"
           >
             Go to verify email
           </Link>
@@ -103,7 +103,7 @@ export function LoginForm() {
         <div className="flex justify-end">
           <Link
             href="/forgot-password"
-            className="text-body-sm text-primary underline-offset-4 hover:underline"
+            className="text-body-sm text-primary underline underline-offset-4"
           >
             Forgot password?
           </Link>
@@ -116,7 +116,7 @@ export function LoginForm() {
         No account?{" "}
         <Link
           href="/sign-up"
-          className="text-primary underline-offset-4 hover:underline"
+          className="text-primary underline underline-offset-4"
         >
           Sign up
         </Link>

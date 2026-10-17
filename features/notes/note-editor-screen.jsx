@@ -46,19 +46,29 @@ function fingerprintNote(title, content) {
 
 function SaveStatus({ status, onRetry }) {
   if (status === "saving" || status === "pending") {
-    return <span className="text-caption text-muted-foreground">Saving…</span>;
+    return (
+      <span role="status" className="text-caption text-muted-foreground">
+        Saving…
+      </span>
+    );
   }
   if (status === "queued") {
     return (
-      <span className="text-caption text-muted-foreground">Pending sync</span>
+      <span role="status" className="text-caption text-muted-foreground">
+        Pending sync
+      </span>
     );
   }
   if (status === "saved") {
-    return <span className="text-caption text-muted-foreground">Saved</span>;
+    return (
+      <span role="status" className="text-caption text-muted-foreground">
+        Saved
+      </span>
+    );
   }
   if (status === "error") {
     return (
-      <span className="text-caption flex items-center gap-2">
+      <span role="status" className="text-caption flex items-center gap-2">
         <span className="text-destructive">Couldn&apos;t save</span>
         <Button type="button" variant="link" size="sm" onClick={onRetry}>
           Retry
