@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ModalShell } from "@/components/a11y/modal-shell";
 import { AuthMessage } from "@/components/auth/auth-message";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
@@ -18,11 +19,10 @@ function SignOutConfirmDialog({ open, onCancel, onConfirm, pending }) {
   }
 
   return (
-    <div
+    <ModalShell
+      open={open}
+      titleId="signout-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="signout-title"
     >
       <div className="bg-popover border-border w-full max-w-md rounded-lg border p-6 shadow-lg">
         <h2 id="signout-title" className="text-title font-semibold">
@@ -47,7 +47,7 @@ function SignOutConfirmDialog({ open, onCancel, onConfirm, pending }) {
           </Button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 

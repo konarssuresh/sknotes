@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalShell } from "@/components/a11y/modal-shell";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -15,11 +16,10 @@ export function LeaveDialog({ open, onStay, onLeave }) {
   }
 
   return (
-    <div
+    <ModalShell
+      open={open}
+      titleId="leave-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="leave-title"
     >
       <div className="bg-popover border-border w-full max-w-md rounded-lg border p-6 shadow-lg">
         <h2 id="leave-title" className="text-title font-semibold">
@@ -38,6 +38,6 @@ export function LeaveDialog({ open, onStay, onLeave }) {
           </Button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

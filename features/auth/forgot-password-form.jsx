@@ -123,14 +123,14 @@ export function ForgotPasswordForm({ resetToken }) {
         <p className="text-body-sm text-muted-foreground mt-6 text-center">
           <Link
             href="/forgot-password"
-            className="text-primary underline-offset-4 hover:underline"
+            className="text-primary underline underline-offset-4"
           >
             Request a new reset link
           </Link>
           {" · "}
           <Link
             href="/login"
-            className="text-primary underline-offset-4 hover:underline"
+            className="text-primary underline underline-offset-4"
           >
             Back to sign in
           </Link>
@@ -167,7 +167,7 @@ export function ForgotPasswordForm({ resetToken }) {
       <p className="text-body-sm text-muted-foreground mt-6 text-center">
         <Link
           href="/login"
-          className="text-primary underline-offset-4 hover:underline"
+          className="text-primary underline underline-offset-4"
         >
           Back to sign in
         </Link>

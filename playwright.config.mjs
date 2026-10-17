@@ -23,11 +23,19 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "a11y-public",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+      testMatch: /a11y-public\.spec\.mjs/,
+    },
+    {
       name: "setup",
       testMatch: /auth\.setup\.mjs/,
     },
     {
       name: "chromium",
+      testIgnore: /a11y-public\.spec\.mjs/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "tests/e2e/.auth/user.json",
