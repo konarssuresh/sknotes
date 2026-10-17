@@ -4,15 +4,10 @@
 
 ## Current project status
 
-- Next.js App Router scaffold exists in JavaScript with Tailwind CSS, ESLint, Prettier, and shadcn/ui `base-nova` configured.
-- Design brief, tokens, screen specifications, and interaction specifications exist.
-- A standalone HTML/CSS/vanilla JS prototype exists and has passed basic syntax checks. Browser-level review is still needed for visual/interaction confidence.
-- The prototype has follow-up scope for SKNotes branding/logo and mock Login/Sign up screens, requested after the initial review.
-- Phase 1 application foundation and Phase 2 backend, database, and authentication are implemented (Better Auth, MongoDB, auth UI, route protection, and email callback hooks).
-- Phase 3 transactional email and account verification are implemented (Resend, branded templates, verified-email gates, tests). Production delivery still requires operator Resend domain verification and Netlify env configuration.
-- Phase 4 notes core and rich-text editor are implemented (Lexical, debounced autosave, recovery drafts, revision conflicts).
-- Phase 5 organization, search, and retrieval are implemented (tags, pins, lifecycle, server search, cursor pagination, export).
-- Phase 6 limited offline resilience is in progress (IndexedDB drafts and mutation queue, sync indicators, logout/account cleanup).
+- **Phases 1–6** are implemented on `main`: App Router foundation, Better Auth + MongoDB, Resend email, notes/editor (Lexical), tags/search/lifecycle, and limited offline resilience (IndexedDB queue, sync UI).
+- **Phase 7 (production readiness)** is complete on `main`: settings/account UI, Playwright E2E in CI, installable PWA with safe caching, WCAG 2.2 AA pass ([accessibility-audit.md](accessibility-audit.md)), operations runbooks ([operations/](operations/)), and [release-checklist.md](operations/release-checklist.md).
+- **Operator tasks before first production launch:** Resend domain verification, Atlas backups + documented restore test, Netlify production env vars, GitHub branch protection on `main` (see release checklist).
+- Design specs and HTML prototype remain under `docs/design/` as reference; production UI follows screen and interaction specifications.
 
 ## Delivery principles
 
