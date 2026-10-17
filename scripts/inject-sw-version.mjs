@@ -31,10 +31,12 @@ function resolveGitSha() {
   }
 }
 
+const gitSha = resolveGitSha();
 const version = formatSwVersion({
   packageVersion: pkg.version,
-  gitSha: resolveGitSha(),
+  gitSha,
 });
+const versionsPath = path.join(root, "lib", "pwa", "generated-versions.json");
 
 let source = readFileSync(swPath, "utf8");
 const needle = `const SKNOTES_SW_VERSION = "${SKNOTES_SW_VERSION_PLACEHOLDER}";`;
@@ -47,4 +49,9 @@ if (!source.includes(needle)) {
 
 source = source.replace(needle, `const SKNOTES_SW_VERSION = "${version}";`);
 writeFileSync(swPath, source, "utf8");
+writeFileSync(
+  versionsPath,
+  `${JSON.stringify({ swVersion: version, buildId: gitSha }, null, 2)}\n`,
+  "utf8"
+);
 console.log(`inject-sw-version: SKNOTES_SW_VERSION=${version}`);
