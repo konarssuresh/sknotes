@@ -3,10 +3,15 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { reportClientError } from "@/lib/logging/report-client-error";
 
 export default function Error({ error, reset }) {
   useEffect(() => {
     console.error(error);
+    reportClientError({
+      message: error?.message ?? "Unknown client error",
+      digest: error?.digest,
+    });
   }, [error]);
 
   return (

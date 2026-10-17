@@ -1,8 +1,11 @@
+import { setLastApiRequestId } from "@/lib/logging/last-api-request-id";
+
 /**
  * @param {Response} response
  */
 async function parseApiResponse(response) {
   const requestId = response.headers.get("x-request-id");
+  setLastApiRequestId(requestId);
   if (response.ok) {
     const data = await response.json();
     return { ok: true, data, requestId };

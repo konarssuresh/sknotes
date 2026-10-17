@@ -37,6 +37,12 @@ Extend `SENSITIVE_KEYS` in [`lib/logging/request-context.js`](../../lib/logging/
 - **Netlify:** function and edge logs in the Netlify dashboard; no centralized log store in-repo.
 - **MongoDB Atlas:** metrics and alerts for connections, opcounters, disk — configure in Atlas UI.
 
+## Client error reports (Phase 8)
+
+When `CLIENT_ERROR_REPORTING_ENABLED=1`, the app accepts `POST /api/client-error` with a small JSON payload (route, error message, optional digest, last API `requestId`, SW/build hints). The route is rate-limited per IP and **never** accepts note title/body, cookies, or tokens. Reports are logged server-side with `[client-error]` and the handler `requestId` for correlation.
+
+Enable in Netlify production or preview when debugging user-reported “Something went wrong” screens. Leave unset to no-op (HTTP 204).
+
 ## Optional integrations (not bundled)
 
 Choose zero or one error tracking stack; wire at these boundaries:

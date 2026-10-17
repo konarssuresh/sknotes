@@ -14,6 +14,7 @@ Use this checklist before and after each production deploy from `main`. It compl
 - [ ] **Atlas backups** enabled per operator tier; restore procedure understood ([backups.md](backups.md)).
 - [ ] **Email:** Resend domain verified for production sending ([../integrations/resend-email.md](../integrations/resend-email.md)).
 - [ ] **Accessibility:** no serious/critical axe violations on core routes ([../accessibility-audit.md](../accessibility-audit.md)); E2E a11y specs green.
+- [ ] **Client errors (optional):** if using `CLIENT_ERROR_REPORTING_ENABLED=1`, confirm Netlify function logs show `[client-error]` entries without note content ([monitoring.md](monitoring.md)).
 
 ### Optional manual checks (MVP)
 

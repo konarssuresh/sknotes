@@ -13,6 +13,9 @@ import { fetchNotesPage, searchNotesPage } from "@/features/notes/note-api";
 import { noteKeys, tagKeys } from "@/features/notes/query-keys";
 import { useDebouncedValue } from "@/features/notes/use-debounced-value";
 import { fetchTags } from "@/features/tags/tag-api";
+import { authClient } from "@/lib/auth/auth-client";
+
+import { useOfflineNotesListCache } from "./use-offline-notes-list-cache";
 
 /**
  * @param {{
@@ -21,6 +24,7 @@ import { fetchTags } from "@/features/tags/tag-api";
  *   showSearch?: boolean;
  *   emptyTitle?: string;
  *   emptyDescription?: string;
+ *   compact?: boolean;
  * }} props
  */
 export function NotesInfiniteList({
@@ -29,6 +33,7 @@ export function NotesInfiniteList({
   showSearch = true,
   emptyTitle,
   emptyDescription,
+  compact = false,
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,6 +53,11 @@ export function NotesInfiniteList({
     [tags]
   );
   const activeTag = tagId ? tags.find((tag) => tag.id === tagId) : null;
+
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id ?? null;
+  const { snapshot, showingStaleCopy, persist, online } =
+    useOfflineNotesListCache(userId, status, tagId, debouncedQuery);
 
   const useSearch = debouncedQuery.trim().length > 0;
   const listKey = useSearch
@@ -77,9 +87,21 @@ export function NotesInfiniteList({
           })
         : fetchNotesPage({ status, tagId, cursor: pageParam }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: online || Boolean(snapshot),
+    placeholderData:
+      !online && snapshot
+        ? { pages: [snapshot], pageParams: [null] }
+        : undefined,
   });
 
   const notes = data?.pages.flatMap((page) => page.notes) ?? [];
+
+  useEffect(() => {
+    const firstPage = data?.pages?.[0];
+    if (firstPage && online && !useSearch) {
+      persist(firstPage);
+    }
+  }, [data, online, persist, useSearch]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -112,8 +134,18 @@ export function NotesInfiniteList({
   };
 
   return (
-    <div className="mx-auto w-full max-w-(--content-max) space-y-6">
-      <h1 className="text-title font-semibold">{title}</h1>
+    <div
+      className={
+        compact
+          ? "w-full space-y-4"
+          : "mx-auto w-full max-w-(--content-max) space-y-6"
+      }
+    >
+      {compact ? (
+        <h2 className="text-body font-semibold">{title}</h2>
+      ) : (
+        <h1 className="text-title font-semibold">{title}</h1>
+      )}
       {showSearch ? (
         <Input
           value={query}
@@ -121,6 +153,11 @@ export function NotesInfiniteList({
           placeholder="Search notes"
           aria-label="Search notes"
         />
+      ) : null}
+      {showingStaleCopy ? (
+        <p className="text-muted-foreground text-sm" role="status">
+          Offline — showing the last saved copy from this device.
+        </p>
       ) : null}
       {activeTag ? (
         <div className="flex items-center gap-2">
@@ -136,6 +173,12 @@ export function NotesInfiniteList({
             Clear filter
           </Button>
         </div>
+      ) : null}
+      {!online && !snapshot && !isLoading ? (
+        <p className="text-muted-foreground" role="status">
+          You&apos;re offline. Open notes once while online to keep a read-only
+          copy on this device.
+        </p>
       ) : null}
       {isLoading ? (
         <p className="text-muted-foreground">Loading notes…</p>

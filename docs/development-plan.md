@@ -6,7 +6,8 @@
 
 - **Phases 1–6** are implemented on `main`: App Router foundation, Better Auth + MongoDB, Resend email, notes/editor (Lexical), tags/search/lifecycle, and limited offline resilience (IndexedDB queue, sync UI).
 - **Phase 7 (production readiness)** is complete on `main`: settings/account UI, Playwright E2E in CI, installable PWA with safe caching, WCAG 2.2 AA pass ([accessibility-audit.md](accessibility-audit.md)), operations runbooks ([operations/](operations/)), and [release-checklist.md](operations/release-checklist.md).
-- **Operator tasks before first production launch:** Resend domain verification, Atlas backups + documented restore test, Netlify production env vars, GitHub branch protection on `main` (see release checklist).
+- **Phase 8 (post-launch depth)** is complete on `main`: automated SW versioning (PR1), privacy-safe `POST /api/client-error` when `CLIENT_ERROR_REPORTING_ENABLED=1`, bounded offline read cache for note lists, desktop notes split layout at `lg+`, and monitoring/deploy documentation updates.
+- **Operator tasks before first production launch:** Resend domain verification, Atlas backups + documented restore test, Netlify production env vars, GitHub branch protection on `main` (see release checklist). Optionally enable `CLIENT_ERROR_REPORTING_ENABLED=1` for client error correlation.
 - Design specs and HTML prototype remain under `docs/design/` as reference; production UI follows screen and interaction specifications.
 
 ## Delivery principles
@@ -183,6 +184,20 @@ Network loss does not silently discard typed content; reconnect behavior is unde
 ### Exit gate
 
 Critical checks pass in CI and preview; backup restore is demonstrated; security, privacy, accessibility, operational and rollback procedures are documented; production deploy is ready.
+
+## Phase 8 — Post-launch reliability and product depth
+
+### Work
+
+- Automate service worker cache versioning on production builds; lock network-first caching for `/_next/static`.
+- Optional client error reporting endpoint with rate limits and privacy scrubbing; correlate with API `requestId` when available.
+- Bounded offline read cache for recently loaded note lists; honest offline UI copy.
+- Desktop (`lg+`) notes list + editor split layout; mobile navigation unchanged.
+- Update operations monitoring docs and project status.
+
+### Exit gate
+
+CI green; client errors reportable without note content when enabled; offline read and desktop split behave as documented; no regression to PWA account isolation.
 
 ## Cross-phase verification strategy
 
