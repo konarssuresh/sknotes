@@ -6,6 +6,7 @@ Use this checklist before and after each production deploy from `main`. It compl
 
 - [ ] **CI green** on the release commit: GitHub Actions `check` and `e2e` jobs (see [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)).
 - [ ] **Local or CI parity:** `npm run ci` passes on the release branch.
+- [ ] **PWA / service worker:** production build injects `SKNOTES_SW_VERSION` automatically (`npm run build`); no manual SW version edit in git. After deploy, spot-check hard refresh if users report stale UI ([`pwa-next-netlify.md`](../integrations/pwa-next-netlify.md)).
 - [ ] **Dependency audit:** `npm run audit:ci` reviewed; no unmitigated high/critical issues ([security-review.md](security-review.md)).
 - [ ] **Netlify PR preview** smoke: sign-in, create/edit note, search, settings sign-out ([deploy.md](deploy.md)).
 - [ ] **Environment:** production Netlify env vars match [environment.md](environment.md) (no secrets in git).

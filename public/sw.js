@@ -1,8 +1,8 @@
 /**
  * SKNotes production service worker — static precache only; sensitive routes are network-only.
- * Bump SKNOTES_SW_VERSION on each deploy that changes cached assets.
+ * SKNOTES_SW_VERSION is injected at build time (scripts/inject-sw-version.mjs).
  */
-const SKNOTES_SW_VERSION = "2026-10-17-network-first";
+const SKNOTES_SW_VERSION = "__SKNOTES_SW_VERSION__";
 const PRECACHE = `sknotes-static-${SKNOTES_SW_VERSION}`;
 
 const PRECACHE_URLS = ["/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];

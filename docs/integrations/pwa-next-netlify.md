@@ -17,12 +17,12 @@ Netlify continues to run `npm run build` and publish via the Next plugin ([`netl
 
 ## Caching policy
 
-1. **Runtime cache:** `/_next/static/*` uses **network-first** (offline fallback to cache). `/icon.svg` and `/icons/*` may use cache. Bump `SKNOTES_SW_VERSION` in `public/sw.js` on every production deploy that changes client bundles.
+1. **Runtime cache:** `/_next/static/*` uses **network-first** (offline fallback to cache). `/icon.svg` and `/icons/*` may use cache. **`SKNOTES_SW_VERSION`** is set automatically at **`npm run build`** by [`scripts/inject-sw-version.mjs`](../../scripts/inject-sw-version.mjs) (package version + git SHA + UTC date). The committed worker keeps placeholder `__SKNOTES_SW_VERSION__`; CI unit tests fail if the network-first policy regresses.
 2. **Network-only:** `/api/*`, auth pages, and all signed-in app routes (`/`, `/notes/*`, `/tags`, `/settings`, archive/trash, etc.). Document navigations are never stored in Cache Storage.
 3. **Cookies / sessions:** No `cache.put` on HTML or API responses; default handler is `fetch()` only.
 4. **Logout:** [`clearClientSessionState`](../offline-resilience.md) clears TanStack Query and deletes all Cache Storage keys so another account on the same browser profile does not reuse cached shells.
 
-Policy helpers are unit-tested in [`tests/unit/pwa-cache-policy.test.js`](../../tests/unit/pwa-cache-policy.test.js) (shared rules with the worker).
+Policy helpers are unit-tested in [`tests/unit/pwa-cache-policy.test.js`](../../tests/unit/pwa-cache-policy.test.js) and [`tests/unit/pwa-sw-source.test.js`](../../tests/unit/pwa-sw-source.test.js) (shared rules with the worker).
 
 ## Registration
 
