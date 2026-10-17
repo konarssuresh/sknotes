@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { AuthMessage } from "@/components/auth/auth-message";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
 import {
@@ -57,17 +58,32 @@ export function SignOutButton() {
   const userId = session?.user?.id;
   const [pending, setPending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
 
   const completeSignOut = async () => {
+    setSignOutError("");
     setPending(true);
-    clearClientSessionState(queryClient);
-    await authClient.signOut();
-    router.replace("/login");
-    router.refresh();
+    try {
+      clearClientSessionState(queryClient);
+      const { error } = await authClient.signOut();
+      if (error) {
+        setSignOutError(
+          error.message || "Could not sign out. Try again in a moment."
+        );
+        setPending(false);
+        return;
+      }
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      setSignOutError("Could not sign out. Try again in a moment.");
+      setPending(false);
+    }
   };
 
   return (
     <>
+      <AuthMessage>{signOutError}</AuthMessage>
       <Button
         type="button"
         variant="outline"
